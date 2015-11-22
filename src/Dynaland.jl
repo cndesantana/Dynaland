@@ -234,11 +234,11 @@ end
 # Y - is the power of the highest value in the series
 # Z - is the number of elements you want to have between 10^X and 10^Y.
 # mode can be 1 or 2. If 'mode' has value 1, the model is static. If it has value 2, the model is dynamic
-function getParameterValues(mode,nval)
-    R0s = logspace(-3,0,nval);
+function getParameterValues(mode,nvals)
+    R0s = logspace(-3,0,nvals);
     if(mode == 2)
-        As = logspace(-3,0,nval);
-        Fs = logspace(-3,0,nval);
+        As = logspace(-3,0,nvals);
+        Fs = logspace(-3,0,nvals);
     elseif (mode == 1)
         As = 0;
         Fs = 0;
@@ -249,7 +249,7 @@ end
 
 ###################### Dynamic of the model
 
-function Dynamic(mode,nval,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sitesoutputs)
+function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sitesoutputs)
 
 	outputfile = open(landscapeoutputs,"w");
 	writedlm(outputfile,["ri G maxDi minDi r0 A f cdynamics/G S J vr mr Mr_Gamma Vr_gamma lastspecies Vr_r Mr_r Vr_t Mr_t Vr_e Mr_e Vr_c Mr_c"]);
@@ -271,7 +271,7 @@ function Dynamic(mode,nval,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,site
                 minDi, maxDi, Di=getMatrixDistanceRGN(S,w);
 		Amax = (maxDi - minDi)/2;
 
-                As,Fs,R0s = getParameterValues(mode);
+                As,Fs,R0s = getParameterValues(mode,nvals);
 
 ###### 	ISOLATED SITES AS INITIAL RGN	
 		r0 = R0s[1];

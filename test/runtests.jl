@@ -16,7 +16,7 @@ function main()
         landscapeoutputs = "LandscapeOutputs.txt";
         sitesoutputs = "SitesOutputs.txt";
 
-        Dynaland.Dynamic(model,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sitesoutputs);
+        Dynaland.Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sitesoutputs);
 end
 
 main();
