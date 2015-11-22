@@ -228,10 +228,28 @@ function demography(S,J,D,Dc,mr,vr,R,lastspecies)
 	return R,lastspecies;
 end
 
+#####To calculate the logarithmic space of parameters, we use the function 'logspace': 
+###logspace(X,Y,Z), where:
+# X - is the power of the lowest value in the series
+# Y - is the power of the highest value in the series
+# Z - is the number of elements you want to have between 10^X and 10^Y.
+# mode can be 1 or 2. If 'mode' has value 1, the model is static. If it has value 2, the model is dynamic
+function getParameterValues(mode,nval)
+    R0s = logspace(-3,0,nval);
+    if(mode == 2)
+        As = logspace(-3,0,nval);
+        Fs = logspace(-3,0,nval);
+    elseif (mode == 1)
+        As = 0;
+        Fs = 0;
+    end
+    return As,Fs,R0s;
+end
+
 
 ###################### Dynamic of the model
 
-function Dynamic(seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sitesoutputs)
+function Dynamic(mode,nval,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sitesoutputs)
 
 	outputfile = open(landscapeoutputs,"w");
 	writedlm(outputfile,["ri G maxDi minDi r0 A f cdynamics/G S J vr mr Mr_Gamma Vr_gamma lastspecies Vr_r Mr_r Vr_t Mr_t Vr_e Mr_e Vr_c Mr_c"]);
@@ -249,19 +267,11 @@ function Dynamic(seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sitesoutputs)
 	#	G = rand(1:Gmax);	
 		G = Gmax;	
 
-		nval = 10;
 		w = rand(S,2);#the location of the points of the landscape.
                 minDi, maxDi, Di=getMatrixDistanceRGN(S,w);
 		Amax = (maxDi - minDi)/2;
 
-#####To calculate the logarithmic space of parameters, we use the function 'logspace': 
-###logspace(X,Y,Z), where:
-# X - is the power of the lowest value in the series
-# Y - is the power of the highest value in the series
-# Z - is the number of elements you want to have between 10^X and 10^Y.
-		As = logspace(-3,0,nval);
-		Fs = logspace(-3,0,nval);
-		R0s = logspace(-3,0,nval);
+                As,Fs,R0s = getParameterValues(mode);
 
 ###### 	ISOLATED SITES AS INITIAL RGN	
 		r0 = R0s[1];
@@ -274,14 +284,13 @@ function Dynamic(seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sitesoutputs)
 		nedges = num_edges(g);
 
 		iR = 1;
-		while(iR <= nval)
+		while(iR <= length(R0s))
 			r0 = R0s[iR];
 			iA = 1;
-			while(iA <= nval)
+			while(iA <= length(As))
 				A = As[iA];
-#				A = 0;
 				iF = 1;
-				while(iF <= nval)
+				while(iF <= length(Fs))
 					f = Fs[iF];
 					cdynamics = 0;
 					r_randomdynamics = zeros(Gmax+1);#store one value of r for each generation
@@ -341,10 +350,6 @@ function Dynamic(seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sitesoutputs)
 		end#while r
 	end#for ri
 end#Dynamic
-
-
-
-
 
 
 end #module
