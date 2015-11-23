@@ -1,5 +1,17 @@
 using Dynaland
 
+#;# To change the dc equation according to GM suggestions - dc = d0 * (1 - A(sin(pi*f*t))) 
+#;# It means that the changes in the connectivity are a proportion of the mean connectivity radius (d0)
+#;# It means that the critical radius ranges between 0 and 2*d0
+#;# So we avoid problems with boundary conditions 
+#;# So the phase space will consider A varying between 0 and 1 (A=0 means static) 
+#;# So the phase space will consider y axis varying between -100 to 100
+#;# 
+#;# 
+#;# To start the system with a different species for each site, in order to make the convergence towards a steady state faster.
+#;# To define a way to identify the steady state (based on the ratio between sd(rich)/mean(rich), for example
+#;# To check if the number of species in the steady stae matches with the literature (paper in PRE 2003, that says that we would expect 240 species in our system for steady state)
+ 
 function main()
 	
         println("Testing Dynaland.jl");
