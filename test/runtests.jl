@@ -27,8 +27,9 @@ function main()
 	vr = 0.003;#migration from the regional pool (speciation)
         landscapeoutputs = "LandscapeOutputs.txt";
         sitesoutputs = "SitesOutputs.txt";
+        phylogenyoutputs = "PhylogenyOutputs.txt";
 
-        Dynaland.Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sitesoutputs);
+        Dynaland.Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sitesoutputs,phylogenyoutputs);
 end
 
 main();

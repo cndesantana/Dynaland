@@ -184,10 +184,10 @@ function Output(outputfile,lastspecies,ri,S,J,G,maxDi,minDi,r0,A,f,cdynamics,vr,
 	return; 
 end
 
-function CladogenesisEvent(R,Sti,Individual,lastspecies,ts,phylogenyfile,ri)
+function CladogenesisEvent(R,Sti,Individual,lastspecies,ts,phylogenyfile,ri,mr,vr)
 	newspeciesClado = lastspecies + 1;
    	R[Sti,Individual] = newspeciesClado;
-        printPhylogeny(newspeciesClado,R[Sti,Individual],ts,phylogenyfile,ri);
+        printPhylogeny(newspeciesClado,R[Sti,Individual],ts,phylogenyfile,ri,mr,vr);
 
 	return R,newspeciesClado; 
 end
@@ -206,8 +206,8 @@ function BirthEvent(R,BirthLocal,KillInd,KillHab)
 	return R;
 end
 
-function printPhylogeny(new,old,ts,phylogenyfile,ri)
-	writedlm(phylogenyfile,[ri old new ts],' ');
+function printPhylogeny(new,old,ts,phylogenyfile,ri,mr,vr)
+	writedlm(phylogenyfile,[ri mr vr old new ts],' ');
         flush(phylogenyfile); 
 end
 
@@ -237,7 +237,7 @@ function demography(S,J,D,Dc,mr,vr,R,lastspecies)
 			R = MigrationEvent(R,KillHab,MigrantHab,KillInd,Dc,J,S);
 
        		elseif (mvb > mr) && (mvb <= mr+vr);#Cladogenesis Speciation event
-			R,lastspecies = CladogenesisEvent(R,KillHab,KillInd,lastspecies,ts,phylogenyfile,ri);
+			R,lastspecies = CladogenesisEvent(R,KillHab,KillInd,lastspecies,ts,phylogenyfile,ri,mr,vr);
 
        		else #Birth event
 			R = BirthEvent(R,BirthLocal,KillInd,KillHab);
@@ -284,7 +284,7 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 
 	if(isfile(phylogenyoutputs)==false)
 		phylogenyfile = open(phylogenyoutputs,"w")	
-		writedlm(phylogenyfile,["Repl Ancestral Derived Age"]); 
+		writedlm(phylogenyfile,["Repl mr vr Ancestral Derived Age"]); 
 		close(phylogenyfile);
 	end
 
