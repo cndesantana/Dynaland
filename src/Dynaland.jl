@@ -186,8 +186,8 @@ end
 
 function CladogenesisEvent(R,Sti,Individual,lastspecies,ts,phylogenyfile,ri,mr,vr)
 	newspeciesClado = lastspecies + 1;
-   	R[Sti,Individual] = newspeciesClado;
         printPhylogeny(newspeciesClado,R[Sti,Individual],ts,phylogenyfile,ri,mr,vr);
+   	R[Sti,Individual] = newspeciesClado;
 
 	return R,newspeciesClado; 
 end
@@ -208,23 +208,22 @@ end
 
 function printPhylogeny(new,old,ts,phylogenyfile,ri,mr,vr)
 	writedlm(phylogenyfile,[ri mr vr old new ts],' ');
-        flush(phylogenyfile); 
 end
 
 #Each site starts with one different species
-function initialPopulation!(S,J)
+function initialPopulation(S,J)
    R = zeros(S,J);
    lastspecies = 0;
-   for(i in 1:S)
-      for(j in 1:J)
-         R[i,j] = i;
-         lastspecies = i; 
+   for(iJ in 1:J)#iterating over columns
+      for(iS in 1:S)
+         R[iS,iJ] = iS;
+         lastspecies = iS; 
       end
    end   
-   return lastspecies, R;
+   return R,lastspecies;
 end
 
-function demography(S,J,D,Dc,mr,vr,R,lastspecies)
+function demography(S,J,D,Dc,mr,vr,R,lastspecies,ri,ts,phylogenyfile)
 	for (j = 1:(S*J))#For each individual in each site
        		#Demography - Resources
        		KillHab = rand(1:S);#which site to kill
@@ -278,13 +277,13 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 
 	if(isfile(sitesoutputs)==false)
         	outputfilepercomp = open(sitesoutputs,"w");
-        	writedlm(outputfilepercomp, ["r r0 A f G Ncomponents Nverts Nedges GammaPerComponent Gamma"]);
+        	writedlm(outputfilepercomp, ["ri r0 A f G Ncomponents Nverts Nedges GammaPerComponent Gamma"]);
         	close(outputfilepercomp);#To close 
         end
 
 	if(isfile(phylogenyoutputs)==false)
 		phylogenyfile = open(phylogenyoutputs,"w")	
-		writedlm(phylogenyfile,["Repl mr vr Ancestral Derived Age"]); 
+		writedlm(phylogenyfile,["ri mr vr Ancestral Derived Age"]); 
 		close(phylogenyfile);
 	end
 
@@ -331,7 +330,8 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 					gamma = 1;
 					r = r0;
 					#Metacommunity
-                                        R,lastspecies = initialPopulation!(S,J);#start the population of each of the J individuals of each of the S sites.
+                                        R,lastspecies = initialPopulation(S,J);#start the population of each of the J individuals of each of the S sites.
+#;#                                        println(open("initialpopulation.txt","w"),R);
 					for (k = 1:G)#%metacommunity dynamic (not-tracking multitrophic metacommunity dynamics!)
 						r_randomdynamics[k] = r;
 						t_randomdynamics[k] = gtrans;
@@ -349,11 +349,12 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 							ncomp = length(comp);
 							nedges = num_edges(g);
 						end
-						R, lastspecies = demography(S,J,D,Dc,mr,vr,R,lastspecies);
+						R, lastspecies = demography(S,J,D,Dc,mr,vr,R,lastspecies,ri,k,phylogenyfile);
 						gamma = GetRichness(R,S);
 						push!(partialgamma,gamma);
 						OutputPerComponent(outputfilepercomp,r,r0,A,f,k,R,S,g,comp,ncomp,gamma);
 					end
+                                        flush(phylogenyfile); 
 					r_randomdynamics[Gmax+1] = r;
 					t_randomdynamics[Gmax+1] = gtrans;
 					e_randomdynamics[Gmax+1] = nedges;
@@ -378,6 +379,9 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 			iR = iR + 1;
 		end#while r
 	end#for ri
+	close(outputfile);
+        close(outputfilepercomp);#To close 
+	close(phylogenyfile);
 end#Dynamic
 
 
