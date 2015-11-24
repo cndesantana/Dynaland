@@ -184,9 +184,10 @@ function Output(outputfile,lastspecies,ri,S,J,G,maxDi,minDi,r0,A,f,cdynamics,vr,
 	return; 
 end
 
-function CladogenesisEvent(R,Sti,Individual,lastspecies)
+function CladogenesisEvent(R,Sti,Individual,lastspecies,ts,phylogenyfile,ri)
 	newspeciesClado = lastspecies + 1;
    	R[Sti,Individual] = newspeciesClado;
+        printPhylogeny(newspeciesClado,R[Sti,Individual],ts,phylogenyfile,ri);
 
 	return R,newspeciesClado; 
 end
@@ -205,6 +206,24 @@ function BirthEvent(R,BirthLocal,KillInd,KillHab)
 	return R;
 end
 
+function printPhylogeny(new,old,ts,phylogenyfile,ri)
+	writedlm(phylogenyfile,[ri old new ts],' ');
+        flush(phylogenyfile); 
+end
+
+
+function initialPopulation!(S,J)
+   R = zeros(S,J);
+   lastspecies = 0;
+   for(i in 1:S)
+      for(j in 1:J)
+         R[i,j] = i;
+         lastspecies = i; 
+      end
+   end   
+   return lastspecies, R;
+end
+
 function demography(S,J,D,Dc,mr,vr,R,lastspecies)
 	for (j = 1:(S*J))#For each individual in each site
        		#Demography - Resources
@@ -218,7 +237,7 @@ function demography(S,J,D,Dc,mr,vr,R,lastspecies)
 			R = MigrationEvent(R,KillHab,MigrantHab,KillInd,Dc,J,S);
 
        		elseif (mvb > mr) && (mvb <= mr+vr);#Cladogenesis Speciation event
-			R,lastspecies = CladogenesisEvent(R,KillHab,KillInd,lastspecies);
+			R,lastspecies = CladogenesisEvent(R,KillHab,KillInd,lastspecies,ts,phylogenyfile,ri);
 
        		else #Birth event
 			R = BirthEvent(R,BirthLocal,KillInd,KillHab);
@@ -249,18 +268,29 @@ end
 
 ###################### Dynamic of the model
 
-function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sitesoutputs)
+function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sitesoutputs,phylogenyoutputs)
 
-	outputfile = open(landscapeoutputs,"w");
-	writedlm(outputfile,["ri G maxDi minDi r0 A f cdynamics/G S J vr mr Mr_Gamma Vr_gamma lastspecies Vr_r Mr_r Vr_t Mr_t Vr_e Mr_e Vr_c Mr_c"]);
-	close(outputfile);
+	if(isfile(landscapeoutputs)==false)
+		outputfile = open(landscapeoutputs,"w");
+		writedlm(outputfile,["ri G maxDi minDi r0 A f cdynamics/G S J vr mr Mr_Gamma Vr_gamma lastspecies Vr_r Mr_r Vr_t Mr_t Vr_e Mr_e Vr_c Mr_c"]);
+		close(outputfile);
+        end
 
-	outputfilepercomp = open(sitesoutputs,"w");
-	writedlm(outputfilepercomp, ["r r0 A f G Ncomponents Nverts Nedges GammaPerComponent Gamma"]);
-	close(outputfilepercomp);#To close 
+	if(isfile(sitesoutputs)==false)
+        	outputfilepercomp = open(sitesoutputs,"w");
+        	writedlm(outputfilepercomp, ["r r0 A f G Ncomponents Nverts Nedges GammaPerComponent Gamma"]);
+        	close(outputfilepercomp);#To close 
+        end
+
+	if(isfile(phylogenyoutputs)==false)
+		phylogenyfile = open(phylogenyoutputs,"w")	
+		writedlm(phylogenyfile,["Repl Ancestral Derived Age"]); 
+		close(phylogenyfile);
+	end
 
 	outputfile = open(landscapeoutputs,"a");
 	outputfilepercomp = open(sitesoutputs,"a");
+	phylogenyfile = open(phylogenyoutputs,"a");
 
 	for (ri in 1:nreal)#realizations
 		srand(seed+(7*ri));
@@ -301,8 +331,7 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 					gamma = 1;
 					r = r0;
 					#Metacommunity
-					lastspecies = 1;
-					R = ones(S,J);
+                                        R,lastspecies = initialPopulation!(S,J);#start the population of each of the J individuals of each of the S sites.
 					for (k = 1:G)#%metacommunity dynamic (not-tracking multitrophic metacommunity dynamics!)
 						r_randomdynamics[k] = r;
 						t_randomdynamics[k] = gtrans;

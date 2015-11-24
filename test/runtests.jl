@@ -16,7 +16,7 @@ function main()
 	
         println("Testing Dynaland.jl");
         mode = 1;#mode 1 means static landscape, mode 2 means dynamic landscape
-        nvals = 5;#number of values of the parameters space
+        nvals = 3;#number of values of the parameters space
 	seed = 1;#seed for random numbers (to control the outputs)
 	nreal = 1;#Number of realizations
 	Gmax = 1000;#Maximum number of Generations
