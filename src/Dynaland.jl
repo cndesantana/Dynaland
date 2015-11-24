@@ -211,7 +211,7 @@ function printPhylogeny(new,old,ts,phylogenyfile,ri)
         flush(phylogenyfile); 
 end
 
-
+#Each site starts with one different species
 function initialPopulation!(S,J)
    R = zeros(S,J);
    lastspecies = 0;
