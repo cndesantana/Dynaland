@@ -327,12 +327,13 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 					e_randomdynamics = zeros(Gmax+1);#store one value of r for each generation
 					c_randomdynamics = zeros(Gmax+1);#store one value of r for each generation
 					partialgamma = zeros(Gmax+1);#store one value of gamma for each generation
-					gamma = 1;
 					r = r0;
 					#Metacommunity
                                         R,lastspecies = initialPopulation(S,J);#start the population of each of the J individuals of each of the S sites.
-#;#                                        println(open("initialpopulation.txt","w"),R);
+#                                        println(open("initialpopulation.txt","w"),R);
+					gamma = lastspecies;
 					for (k = 1:G)#%metacommunity dynamic (not-tracking multitrophic metacommunity dynamics!)
+						OutputPerComponent(outputfilepercomp,r,r0,A,f,k-1,R,S,g,comp,ncomp,gamma);
 						r_randomdynamics[k] = r;
 						t_randomdynamics[k] = gtrans;
 						e_randomdynamics[k] = nedges;
@@ -352,8 +353,8 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 						R, lastspecies = demography(S,J,D,Dc,mr,vr,R,lastspecies,ri,k,phylogenyfile);
 						gamma = GetRichness(R,S);
 						push!(partialgamma,gamma);
-						OutputPerComponent(outputfilepercomp,r,r0,A,f,k,R,S,g,comp,ncomp,gamma);
 					end
+					OutputPerComponent(outputfilepercomp,r,r0,A,f,G,R,S,g,comp,ncomp,gamma);
                                         flush(phylogenyfile); 
 					r_randomdynamics[Gmax+1] = r;
 					t_randomdynamics[Gmax+1] = gtrans;
