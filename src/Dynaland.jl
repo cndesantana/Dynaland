@@ -177,12 +177,14 @@ function OutputPerComponent(outputfilepercomp,r,r0,A,f,k,R,S,g,comp,ncomp,gamma)
 	flush(outputfilepercomp);#To print in the output file each realization
 end
 
+
 function Output(outputfile,lastspecies,ri,S,J,G,maxDi,minDi,r0,A,f,cdynamics,vr,mr,Mr_gamma,Vr_gamma,Vr_r,Mr_r,Vr_t,Mr_t,Vr_e,Mr_e,Vr_c,Mr_c);
 	writedlm(outputfile, [ri G maxDi minDi r0 A f cdynamics/G S J vr mr Mr_gamma Vr_gamma lastspecies Vr_r Mr_r Vr_t Mr_t Vr_e Mr_e Vr_c Mr_c], ' ');
 	flush(outputfile);#To print in the output file each realization
 
 	return; 
 end
+
 
 function CladogenesisEvent(R,Sti,Individual,lastspecies,ts,phylogenyfile,ri,mr,vr)
 	newspeciesClado = lastspecies + 1;
@@ -264,11 +266,7 @@ function getParameterValues(mode,nvals)
     return As,Fs,R0s;
 end
 
-
-###################### Dynamic of the model
-
-function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sitesoutputs,phylogenyoutputs)
-
+function createOutputFiles(landscapeoutputs,sitesoutputs,phylogenyoutputs)
 	if(isfile(landscapeoutputs)==false)
 		outputfile = open(landscapeoutputs,"w");
 		writedlm(outputfile,["ri G maxDi minDi r0 A f cdynamics/G S J vr mr Mr_Gamma Vr_gamma lastspecies Vr_r Mr_r Vr_t Mr_t Vr_e Mr_e Vr_c Mr_c"]);
@@ -286,7 +284,13 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 		writedlm(phylogenyfile,["ri mr vr Ancestral Derived Age"]); 
 		close(phylogenyfile);
 	end
+end
 
+###################### Dynamic of the model
+
+function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sitesoutputs,phylogenyoutputs)
+
+	createOutputFiles(landscapeoutputs,sitesoutputs,phylogenyoutputs);
 	outputfile = open(landscapeoutputs,"a");
 	outputfilepercomp = open(sitesoutputs,"a");
 	phylogenyfile = open(phylogenyoutputs,"a");
@@ -361,17 +365,18 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 					e_randomdynamics[Gmax+1] = nedges;
 					c_randomdynamics[Gmax+1] = ncomp;
 					partialgamma[Gmax+1] = gamma;
+                                        middle_point = round(Int,floor((Gmax + 1)/2)+1)
 					#%random dynamic landscape
-					Vr_r =  var(r_randomdynamics[501:end]);
-					Mr_r =  mean(r_randomdynamics[501:end]);
-					Vr_t =  var(t_randomdynamics[501:end]);
-					Mr_t =  mean(t_randomdynamics[501:end]);
-					Vr_e =  var(e_randomdynamics[501:end]);
-					Mr_e =  mean(e_randomdynamics[501:end]);
-					Mr_c =  mean(c_randomdynamics[501:end]);
-					Vr_c =  var(c_randomdynamics[501:end]);	
-					Vr_gamma =  var(partialgamma[501:end]);
-					Mr_gamma =  mean(partialgamma[501:end]);
+					Vr_r =  var(r_randomdynamics[middle_point:end]);
+					Mr_r =  mean(r_randomdynamics[middle_point:end]);
+					Vr_t =  var(t_randomdynamics[middle_point:end]);
+					Mr_t =  mean(t_randomdynamics[middle_point:end]);
+					Vr_e =  var(e_randomdynamics[middle_point:end]);
+					Mr_e =  mean(e_randomdynamics[middle_point:end]);
+					Mr_c =  mean(c_randomdynamics[middle_point:end]);
+					Vr_c =  var(c_randomdynamics[middle_point:end]);	
+					Vr_gamma =  var(partialgamma[middle_point:end]);
+					Mr_gamma =  mean(partialgamma[middle_point:end]);
 					Output(outputfile,lastspecies,ri,S,J,G,maxDi,minDi,r0,A,f,cdynamics,vr,mr,Mr_gamma,Vr_gamma,Vr_r,Mr_r,Vr_t,Mr_t,Vr_e,Mr_e,Vr_c,Mr_c);
 					iF = iF+1;
 				end#while nf
