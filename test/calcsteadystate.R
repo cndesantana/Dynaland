@@ -59,7 +59,7 @@ plotSteadystate<-function(inputfilename,dat){
    	}
    }
    par(xpd="TRUE");
-   legend("bottomleft",legend=signif(myr0,2),col=(1:length(myr0)),lwd=1,pch=(1:length(myr0)),title="mean radius");
+   legend("topleft",legend=signif(myr0,2),col=(1:length(myr0)),lwd=1,pch=(1:length(myr0)),title="mean radius");
    dev.off();
 }
 
