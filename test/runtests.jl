@@ -19,7 +19,7 @@ function main()
         nvals = 4;#number of values of the parameters space
 	seed = 1;#seed for random numbers (to control the outputs)
 	nreal = 1;#Number of realizations
-	Gmax = 2;#Maximum number of Generations
+	Gmax = 5000;#Maximum number of Generations
 	landG = 1;#Number of generations before a landscape upgrade
 	S = 10;#Number of sites
 	J = 10;#Number of inds. per site
