@@ -63,9 +63,9 @@ plotSteadystate<-function(inputfilename,dat){
    dev.off();
 }
 
-#args <- commandArgs(trailingOnly = TRUE)
-#inputfilename<-args[1];
-inputfilename<-"SitesOutputs_Static3.txt"
+args <- commandArgs(trailingOnly = TRUE)
+inputfilename<-args[1];
+
 dat<-read.csv(inputfilename,sep=" ")
 
 plotSteadystate(inputfilename,dat);

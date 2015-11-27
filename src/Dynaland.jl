@@ -197,9 +197,8 @@ end
 function MigrationEvent(R,KillHab,MigrantHab,KillInd,Dc,J,S)
 	target = KillHab;
 	source=findfirst(Dc[target,:].>=MigrantHab);
-	MigrantInd = rand(1:J);
-	R[target,KillInd] = R[source,MigrantInd];
-
+        MigrantInd = rand(1:J);
+        R[target,KillInd] = R[source,MigrantInd];
 	return R;
 end;
 
@@ -235,7 +234,9 @@ function demography(S,J,D,Dc,mr,vr,R,lastspecies,ri,ts,phylogenyfile)
 		BirthLocal = rand(1:J);#which individual to born
 
        		if mvb <= mr;#Migration event
-			R = MigrationEvent(R,KillHab,MigrantHab,KillInd,Dc,J,S);
+			if(sum(Dc) > 0)#to guarantee that the migration will not occur if the landscape is completed disconnected
+				R = MigrationEvent(R,KillHab,MigrantHab,KillInd,Dc,J,S);
+			end
 
        		elseif (mvb > mr) && (mvb <= mr+vr);#Cladogenesis Speciation event
 			R,lastspecies = CladogenesisEvent(R,KillHab,KillInd,lastspecies,ts,phylogenyfile,ri,mr,vr);
@@ -256,6 +257,7 @@ end
 # mode can be 1 or 2. If 'mode' has value 1, the model is static. If it has value 2, the model is dynamic
 function getParameterValues(mode,nvals)
     R0s = logspace(-3,0,nvals);
+#    R0s = 0.001
     if(mode == 2)
         As = logspace(-3,0,nvals);
         Fs = logspace(-3,0,nvals);
@@ -310,6 +312,7 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 		r0 = R0s[1];
 		Di,D = InitialSeasonalRGN(S,w,r0);#To create the first RGN
 		Dc, DI = transformMatrices(D,Di,S);
+#                println(open("initialDc_$r0.txt","w"),Dc);
 		g = createGraph(D,S);
 		gtrans = graphTransitivity(D);
 		comp = connected_components(g);
@@ -334,7 +337,8 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 					r = r0;
 					#Metacommunity
                                         R,lastspecies = initialPopulation(S,J);#start the population of each of the J individuals of each of the S sites.
-#                                        println(open("initialpopulation.txt","w"),R);
+#                                        println(open("initialpopulation_$r0.txt","w"),R);
+#;#                                        println(open("initialpopulation.txt","w"),R);
 					gamma = lastspecies;
 					for (k = 1:G)#%metacommunity dynamic (not-tracking multitrophic metacommunity dynamics!)
 						OutputPerComponent(outputfilepercomp,r,r0,A,f,k-1,R,S,g,comp,ncomp,gamma);
@@ -344,10 +348,12 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 						c_randomdynamics[k] = ncomp;
 						partialgamma[k] = gamma;
 						if((k % landG) == 0)#The parameter landG defines how often landscape is updated
+#                                                        println(open("population_$k$r0.txt","w"),R);
 							cdynamics = cdynamics + 1;
 #							r, D, Di = SeasonalRGN(r0,A,f,S,cdynamics,w);
 							r, D, Di = SeasonalRGN(r0,0,f,S,cdynamics,w);#Static landscape: A == 0
 							Dc, DI = transformMatrices(D,Di,S);
+#                                                        println(open("Dc_$k$r0.txt","w"),Dc);
 							g = createGraph(D,S);
 							gtrans = graphTransitivity(D); 
 							comp = connected_components(g);
@@ -358,6 +364,8 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 						gamma = GetRichness(R,S);
 						push!(partialgamma,gamma);
 					end
+#                                        println(open("finalDc_$r0.txt","w"),Dc);
+#                                        println(open("finalpopulation_$r0.txt","w"),R);
 					OutputPerComponent(outputfilepercomp,r,r0,A,f,G,R,S,g,comp,ncomp,gamma);
                                         flush(phylogenyfile); 
 					r_randomdynamics[Gmax+1] = r;

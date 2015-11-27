@@ -19,17 +19,21 @@ function main()
         nvals = 4;#number of values of the parameters space
 	seed = 1;#seed for random numbers (to control the outputs)
 	nreal = 1;#Number of realizations
-	Gmax = 100000;#Maximum number of Generations
+	Gmax = 2;#Maximum number of Generations
 	landG = 1;#Number of generations before a landscape upgrade
-	S = 100;#Number of sites
-	J = 100;#Number of inds. per site
+	S = 10;#Number of sites
+	J = 10;#Number of inds. per site
 	mr = 0.3;#migration between sites 
 	vr = 0.003;#migration from the regional pool (speciation)
-        landscapeoutputs = "LandscapeOutputs_Static4.txt";
-        sitesoutputs = "SitesOutputs_Static4.txt";
-        phylogenyoutputs = "PhylogenyOutputs_Static4.txt";
+        landscapeoutputs = "LandscapeOutputs_Static_$Gmax.txt";
+        sitesoutputs = "SitesOutputs_Static_$Gmax.txt";
+        phylogenyoutputs = "PhylogenyOutputs_Static_$Gmax.txt";
 
         Dynaland.Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sitesoutputs,phylogenyoutputs);
+
+        mydate = Libc.strftime("%Y_%m_%d_%H_%M_%S",time());
+        command = `sh sendmail.sh Finished_at_$mydate charles.santana@gmail.com`
+        run(command);
 end
 
 main();
