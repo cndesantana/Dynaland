@@ -65,7 +65,6 @@ plotSteadystate<-function(inputfilename,dat){
 
 args <- commandArgs(trailingOnly = TRUE)
 inputfilename<-args[1];
-
 dat<-read.csv(inputfilename,sep=" ")
 
 plotSteadystate(inputfilename,dat);
