@@ -255,13 +255,15 @@ end
 # Y - is the power of the highest value in the series
 # Z - is the number of elements you want to have between 10^X and 10^Y.
 # mode can be 1 or 2. If 'mode' has value 1, the model is static. If it has value 2, the model is dynamic
-function getParameterValues(mode,nvals)
-    R0s = logspace(-3,0,nvals);
+function getParameterValues(mode,highest,lowest,nvals)
+    step = (highest-lowest)/nvals;
+    R0s = [0.001;collect(lowest:step:highest)];
 #    R0s = 0.001
     if(mode == 2)
         As = 1;
 #        As = logspace(-3,0,nvals);
-        Fs = logspace(-3,0,nvals);
+#        As = [0.001;collect(lowest:step:highest)];
+        Fs = [0.001;collect(lowest:step:highest)];
     elseif (mode == 1)
         As = 0;
         Fs = 0;
@@ -307,7 +309,7 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
                 minDi, maxDi, Di=getMatrixDistanceRGN(S,w);
 		Amax = (maxDi - minDi)/2;
 
-                As,Fs,R0s = getParameterValues(mode,nvals);
+                As,Fs,R0s = getParameterValues(mode,1,0.01,nvals);
 
 ###### 	ISOLATED SITES AS INITIAL RGN	
 		r0 = R0s[1];
