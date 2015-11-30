@@ -259,7 +259,8 @@ function getParameterValues(mode,nvals)
     R0s = logspace(-3,0,nvals);
 #    R0s = 0.001
     if(mode == 2)
-        As = logspace(-3,0,nvals);
+        As = 1;
+#        As = logspace(-3,0,nvals);
         Fs = logspace(-3,0,nvals);
     elseif (mode == 1)
         As = 0;

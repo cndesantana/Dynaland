@@ -1,0 +1,7 @@
+dat<-read.csv("./histogram.txt",sep=" ",header=FALSE)
+plot(dat$V2,dat$V1)
+plot(dat$V2,dat$V1,xlab="Richness",ylab="Number of Generations")
+png("./DistributionOfRichness.png",width=1980,height=1280,res=300)
+plot(dat$V2,dat$V1,xlab="Richness",ylab="Number of Generations")
+dev.off()
+savehistory("./plotdistribution_richness.R")

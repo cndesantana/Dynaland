@@ -15,19 +15,23 @@ using Dynaland
 function main()
 	
         println("Testing Dynaland.jl");
-        mode = 1;#mode 1 means static landscape, mode 2 means dynamic landscape
-        nvals = 10;#number of values of the parameters space
+        mode = 2;#mode 1 means static landscape, mode 2 means dynamic landscape
+        nvals = 4;#number of values of the parameters space
 	seed = 1;#seed for random numbers (to control the outputs)
 	nreal = 1;#Number of realizations
-	Gmax = 10000;#Maximum number of Generations
+	Gmax = 5000;#Maximum number of Generations
 	landG = 1;#Number of generations before a landscape upgrade
 	S = 100;#Number of sites
 	J = 100;#Number of inds. per site
 	mr = 0.3;#migration between sites 
 	vr = 0.003;#migration from the regional pool (speciation)
-        landscapeoutputs = "LandscapeOutputs_Static_$Gmax.txt";
-        sitesoutputs = "SitesOutputs_Static_$Gmax.txt";
-        phylogenyoutputs = "PhylogenyOutputs_Static_$Gmax.txt";
+        sufix = "Static";
+        if(mode == 2)
+           sufix = "Dynamic";
+        end
+        landscapeoutputs = "LandscapeOutputs_$sufix$Gmax.txt";
+        sitesoutputs = "SitesOutputs_$sufix$Gmax.txt";
+        phylogenyoutputs = "PhylogenyOutputs_$sufix$Gmax.txt";
 
         Dynaland.Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sitesoutputs,phylogenyoutputs);
 
