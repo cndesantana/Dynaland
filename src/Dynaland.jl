@@ -353,8 +353,7 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 						if((k % landG) == 0)#The parameter landG defines how often landscape is updated
 #                                                        println(open("population_$k$r0.txt","w"),R);
 							cdynamics = cdynamics + 1;
-#							r, D, Di = SeasonalRGN(r0,A,f,S,cdynamics,w);
-							r, D, Di = SeasonalRGN(r0,0,f,S,cdynamics,w);#Static landscape: A == 0
+							r, D, Di = SeasonalRGN(r0,A,f,S,cdynamics,w);#Static landscape: A == 0
 							Dc, DI = transformMatrices(D,Di,S);
 #                                                        println(open("Dc_$k$r0.txt","w"),Dc);
 							g = createGraph(D,S);
