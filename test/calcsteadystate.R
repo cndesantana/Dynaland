@@ -4,6 +4,14 @@ calcConvergence<-function(subset){
    return(conv)
 }
 
+plotAreaRichness<-function(inputfilename,dat,f){
+   outputfilename<-paste(inputfilename,".area_richness.png",sep="");
+   png(outputfilename,width=1980,height=1280,res=300);
+   plot(dat$Nverts,dat$GammaPerComponent,log="x",xlab="Size of the Component",ylab="Richness of the component",main=paste("Area vs. Richness\n (A = 0, f = ",signif(f,2),")",sep=""),ylim=c(0,400))
+   dev.off()
+}
+
+
 plotConvergence<-function(inputfilename,dat,f){
    maxrich<-max(as.numeric(dat$Gamma));
    maxgen<-max(as.numeric(dat$G));
@@ -30,15 +38,15 @@ plotConvergence<-function(inputfilename,dat,f){
       nwindows<-length(myconvergence);
       if(i==1){
          cat("plotting plot...",sep="\n");
-         plot(1:nwindows,as.numeric(myconvergence),xlab="Generations",ylab="sd/mean",main="Convergence",type="b",col=mycolor,pch=i,log="x",ylim=c(0,0.3))
+         plot(1:nwindows,as.numeric(myconvergence),xlab="Generations",ylab="sd/mean",main=paste("Convergence\n (A = 0, f = ",signif(f,2),")",sep=""),type="p",col=mycolor,pch=i,log="x",ylim=c(0,0.3))
          mycolor<-mycolor+1;
       }else{
          cat("plotting points...",sep="\n");
          if(sum(mydat$Nedges)>0){
-                 points(1:nwindows,as.numeric(myconvergence),col=mycolor,type="b",pch=i)
-   	 	 points(log10(mydat$G),mydat$Gamma,col=mycolor,type="b",pch=i)
-                 mycolor<-mycolor+1;
-   	 }
+              points(1:nwindows,as.numeric(myconvergence),col=mycolor,type="p",pch=i)
+              points(log10(mydat$G),mydat$Gamma,col=mycolor,type="p",pch=i)
+              mycolor<-mycolor+1;
+         }
       }
    }
    if(mycolor <= 5)#if there are not so much values for the legend
@@ -47,7 +55,7 @@ plotConvergence<-function(inputfilename,dat,f){
       legend("topright",legend=signif(myr0,2),col=(1:length(myr0)),lwd=1,pch=(1:length(myr0)),title="mean radius");
    }
    dev.off();
-   mydate<-format(Sys.time(), "%H_%M_%S_%Y");system(paste("sh sendmail.sh ConvFigure","_",mydate," charles.santana@gmail.com ",outputfilename,sep=""));
+#   mydate<-format(Sys.time(), "%H_%M_%S_%Y");system(paste("sh sendmail.sh ConvFigure","_",mydate," charles.santana@gmail.com ",outputfilename,sep=""));
 }
 
 plotSteadystate<-function(inputfilename,dat,f){
@@ -58,27 +66,27 @@ plotSteadystate<-function(inputfilename,dat,f){
    png(outputfilename,width=1980,height=1280,res=300);
    mycolor<-1;
    for(i in 1:length(myr0)){
-   	    pos<-which(dat$r0==myr0[i])
-   	    mydat<-dat[pos,]
-        newpos<-which(mydat$Ncomponents==1);
-        mydat<-mydat[newpos,];
-   	    mydat$G<-mydat$G+1;
-   	    if(i==1){
-                   plot(log10(mydat$G),mydat$Gamma,xlab="log10(Generations)",ylab="Richness",col=mycolor,type="b",main=paste("Steady State Study\n (A = 0, f = ",signif(f,2),")",sep=""),xlim=c(0,log10(maxgen)),ylim=c(0,400),pch=i)
-                   mycolor<-mycolor+1;
-   	    }else{
-                if(sum(mydat$Nedges)>0){
-   			                points(log10(mydat$G),mydat$Gamma,col=mycolor,type="b",pch=i)
-                        mycolor<-mycolor+1;
-   	    }
-   	}
+      pos<-which(dat$r0==myr0[i])
+      mydat<-dat[pos,]
+      newpos<-which(mydat$Ncomponents==1);
+      mydat<-mydat[newpos,];
+      mydat$G<-mydat$G+1;
+      if(i==1){
+         plot(log10(mydat$G),mydat$Gamma,xlab="log10(Generations)",ylab="Richness",col=mycolor,type="p",main=paste("Steady State Study\n (A = 0, f = ",signif(f,2),")",sep=""),xlim=c(0,log10(maxgen)),ylim=c(0,400),pch=i)
+         mycolor<-mycolor+1;
+      }else{
+         if(sum(mydat$Nedges)>0){
+            points(log10(mydat$G),mydat$Gamma,col=mycolor,type="p",pch=i)
+            mycolor<-mycolor+1;
+         }
+      }
    }
    if(mycolor <= 5)#if there are not so much values for the legend
    { 
         par(xpd="TRUE");
         legend("topleft",legend=signif(myr0,2),col=(1:length(myr0)),lwd=1,pch=(1:length(myr0)),title="mean radius");
    }
-   mydate<-format(Sys.time(), "%H_%M_%S_%Y");system(paste("sh sendmail.sh SteadyStateFig","_",mydate," charles.santana@gmail.com ",outputfilename,sep=""));
+#   mydate<-format(Sys.time(), "%H_%M_%S_%Y");system(paste("sh sendmail.sh SteadyStateFig","_",mydate," charles.santana@gmail.com ",outputfilename,sep=""));
    dev.off();
 }
 
@@ -93,4 +101,5 @@ for(i in 1:length(myf)){
   mydat<-dat[which(dat$f==myf[i]),]
   plotSteadystate(paste(inputfilename,"_f_",myf[i],sep=""),mydat,myf[i]);
   plotConvergence(paste(inputfilename,"_f_",myf[i],sep=""),mydat,myf[i]);
+  plotAreaRichness(paste(inputfilename,"_f_",myf[i],sep=""),mydat,myf[i]);
 }
