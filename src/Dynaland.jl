@@ -261,7 +261,6 @@ function getParameterValues(mode,highest,lowest,nvals)
 #    R0s = 0.001
     if(mode == 2)
         As = 1;
-#        As = logspace(-3,0,nvals);
 #        As = [0.001;collect(lowest:step:highest)];
         Fs = [0.001;collect(lowest:step:highest)];
     elseif (mode == 1)
@@ -351,11 +350,9 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 						c_randomdynamics[k] = ncomp;
 						partialgamma[k] = gamma;
 						if((k % landG) == 0)#The parameter landG defines how often landscape is updated
-#                                                        println(open("population_$k$r0.txt","w"),R);
 							cdynamics = cdynamics + 1;
 							r, D, Di = SeasonalRGN(r0,A,f,S,cdynamics,w);#Static landscape: A == 0
 							Dc, DI = transformMatrices(D,Di,S);
-#                                                        println(open("Dc_$k$r0.txt","w"),Dc);
 							g = createGraph(D,S);
 							gtrans = graphTransitivity(D); 
 							comp = connected_components(g);
@@ -366,8 +363,6 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 						gamma = GetRichness(R,S);
 						push!(partialgamma,gamma);
 					end
-#                                        println(open("finalDc_$r0.txt","w"),Dc);
-#                                        println(open("finalpopulation_$r0.txt","w"),R);
 					OutputPerComponent(outputfilepercomp,r,r0,A,f,G,R,S,g,comp,ncomp,gamma);
                                         flush(phylogenyfile); 
 					r_randomdynamics[Gmax+1] = r;

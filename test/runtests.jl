@@ -12,22 +12,22 @@ using Dynaland
 #;# To define a way to identify the steady state (based on the ratio between sd(rich)/mean(rich), for example
 #;# To check if the number of species in the steady stae matches with the literature (paper in PRE 2003, that says that we would expect 240 species in our system for steady state)
  
-function main()
+function main(mode_)
 	
         println("Testing Dynaland.jl");
-        mode = 2;#mode 1 means static landscape, mode 2 means dynamic landscape
-        nvals = 4;#number of values of the parameters space
+        mode = parse(Int,mode_);#mode 1 means static landscape, mode 2 means dynamic landscape
+        nvals = 3;#number of values of the parameters space
 	seed = 1;#seed for random numbers (to control the outputs)
 	nreal = 1;#Number of realizations
-	Gmax = 5000;#Maximum number of Generations
+	Gmax = 1000;#Maximum number of Generations
 	landG = 1;#Number of generations before a landscape upgrade
 	S = 100;#Number of sites
 	J = 100;#Number of inds. per site
 	mr = 0.3;#migration between sites 
 	vr = 0.003;#migration from the regional pool (speciation)
-        sufix = "Static";
+        sufix = "Static_";
         if(mode == 2)
-           sufix = "Dynamic";
+           sufix = "Dynamic_";
         end
         landscapeoutputs = "LandscapeOutputs_$sufix$Gmax.txt";
         sitesoutputs = "SitesOutputs_$sufix$Gmax.txt";
@@ -35,9 +35,9 @@ function main()
 
         Dynaland.Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sitesoutputs,phylogenyoutputs);
 
-        mydate = Libc.strftime("%Y_%m_%d_%H_%M_%S",time());
-        command = `sh sendmail.sh Finished_at_$mydate charles.santana@gmail.com`
-        run(command);
+#        mydate = Libc.strftime("%Y_%m_%d_%H_%M_%S",time());
+#        command = `sh sendmail.sh Finished_at_$mydate charles.santana@gmail.com`
+#        run(command);
 end
 
-main();
+main(ARGS[1]);
