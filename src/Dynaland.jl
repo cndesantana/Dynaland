@@ -188,7 +188,7 @@ end
 
 function CladogenesisEvent(R,Sti,Individual,lastspecies,ts,phylogenyfile,ri,mr,vr)
 	newspeciesClado = lastspecies + 1;
-        printPhylogeny(newspeciesClado,R[Sti,Individual],ts,phylogenyfile,ri,mr,vr);
+#        printPhylogeny(newspeciesClado,R[Sti,Individual],ts,phylogenyfile,ri,mr,vr);
    	R[Sti,Individual] = newspeciesClado;
 
 	return R,newspeciesClado; 
@@ -226,20 +226,23 @@ end
 
 function demography(S,J,D,Dc,mr,vr,R,lastspecies,ri,ts,phylogenyfile)
 	for (j = 1:(S*J))#For each individual in each site
+                realmr = mr;
        		#Demography - Resources
        		KillHab = rand(1:S);#which site to kill
 		KillInd = rand(1:J);#which individual to kill
 		mvb = rand();
 		MigrantHab = rand()*maximum(Dc[KillHab,:]);
 		BirthLocal = rand(1:J);#which individual to born
-
-       		if mvb <= mr;#Migration event
+                if(sum(Dc) == 0)
+                   realmr = 0;
+                end
+       		if mvb <= realmr;#Migration event
 			if(sum(Dc) > 0)#to guarantee that the migration will not occur if the landscape is completed disconnected
 				R = MigrationEvent(R,KillHab,MigrantHab,KillInd,Dc,J,S);
 			end
 
-       		elseif (mvb > mr) && (mvb <= mr+vr);#Cladogenesis Speciation event
-			R,lastspecies = CladogenesisEvent(R,KillHab,KillInd,lastspecies,ts,phylogenyfile,ri,mr,vr);
+       		elseif (mvb > realmr) && (mvb <= realmr+vr);#Cladogenesis Speciation event
+			R,lastspecies = CladogenesisEvent(R,KillHab,KillInd,lastspecies,ts,phylogenyfile,ri,realmr,vr);
 
        		else #Birth event
 			R = BirthEvent(R,BirthLocal,KillInd,KillHab);
