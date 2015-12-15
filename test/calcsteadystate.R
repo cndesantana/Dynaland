@@ -33,8 +33,8 @@ plotConvergence<-function(inputfilename,dat,f){
          plot(1:nwindows,as.numeric(myconvergence),xlab="Generations",ylab="sd/mean",main="Convergence",type="b",col=mycolor,pch=i,log="x",ylim=c(0,0.3))
          mycolor<-mycolor+1;
       }else{
-         cat(paste("plotting points...",i,sep=""),sep="\n");
          if(sum(mydat$Nedges)>0){
+                 cat(paste("plotting points...",i,sep=""),sep="\n");
                  points(1:nwindows,as.numeric(myconvergence),col=mycolor,type="b",pch=i)
    	 	 points(log10(mydat$G),mydat$Gamma,col=mycolor,type="b",pch=i)
                  mycolor<-mycolor+1;
@@ -44,12 +44,12 @@ plotConvergence<-function(inputfilename,dat,f){
    par(xpd="TRUE");
    if(mycolor <= 6)#if there are not so much values for the legend
    { 
-      legend("topright",legend=signif(myr0,2),col=(1:length(myr0)),lwd=1,pch=(1:length(myr0)),title="mean radius");
+      legend("topright",legend=signif(myr0[1:(mycolor-1)],2),col=(1:length(myr0[1:(mycolor-1)])),lwd=1,pch=(1:length(myr0[1:(mycolor-1)])),title="mean radius");
    }
    else{
       nelements<-length(myr0);
       poselements<-seq(from=1,to=nelements,length.out=6);
-      legend("topright",legend=signif(myr0[poselements},2),col=poselements,lwd=1,pch=poselements,title="mean radius");
+      legend("topright",legend=signif(myr0[poselements],2),col=poselements,lwd=1,pch=poselements,title="mean radius");
    }
    dev.off();
 #   mydate<-format(Sys.time(), "%H_%M_%S_%Y");system(paste("sh sendmail.sh ConvFigure","_",mydate," charles.santana@gmail.com ",outputfilename,sep=""));
@@ -63,31 +63,32 @@ plotSteadystate<-function(inputfilename,dat,f){
    png(outputfilename,width=1980,height=1280,res=300);
    mycolor<-1;
    for(i in 1:length(myr0)){
-   	    pos<-which(dat$r0==myr0[i])
-   	    mydat<-dat[pos,]
+   	pos<-which(dat$r0==myr0[i])
+   	mydat<-dat[pos,]
         newpos<-which(mydat$Ncomponents==1);
         mydat<-mydat[newpos,];
-   	    mydat$G<-mydat$G+1;
-   	    if(i==1){
-                   plot(log10(mydat$G),mydat$Gamma,xlab="log10(Generations)",ylab="Richness",col=mycolor,type="b",main=paste("Steady State Study\n (A = 0, f = ",signif(f,2),")",sep=""),xlim=c(0,log10(maxgen)),ylim=c(0,400),pch=i)
-                   mycolor<-mycolor+1;
-   	    }else{
-                if(sum(mydat$Nedges)>0){
-   			                points(log10(mydat$G),mydat$Gamma,col=mycolor,type="b",pch=i)
-                        mycolor<-mycolor+1;
+   	mydat$G<-mydat$G+1;
+   	if(i==1){
+            plot(log10(mydat$G),mydat$Gamma,xlab="log10(Generations)",ylab="Richness",col=mycolor,type="b",main=paste("Steady State Study\n (A = 0, f = ",signif(f,2),")",sep=""),xlim=c(0,log10(maxgen)),ylim=c(0,400),pch=i)
+            mycolor<-mycolor+1;
+   	}else{
+            if(sum(mydat$Nedges)>0){
+   	    	points(log10(mydat$G),mydat$Gamma,col=mycolor,type="b",pch=i)
+                    mycolor<-mycolor+1;
    	    }
    	}
    }
-   par(xpd="TRUE");
-   if(mycolor <= 6)#if there are not so much values for the legend
-   { 
-      legend("topleft",legend=signif(myr0,2),col=(1:length(myr0)),lwd=1,pch=(1:length(myr0)),title="mean radius");
-   }
-   else{
-      nelements<-length(myr0);
-      poselements<-seq(from=1,to=nelements,length.out=6);
-      legend("topright",legend=signif(myr0[poselements},2),col=poselements,lwd=1,pch=poselements,title="mean radius");
-   }
+   abline(h=250,col="black",lty="dashed",lwd=1);
+#   par(xpd="TRUE");
+#   if(mycolor <= 6)#if there are not so much values for the legend
+#   { 
+#      legend("topleft",legend=signif(myr0[1:(mycolor-1)],2),col=(1:length(myr0[1:(mycolor-1)])),lwd=1,pch=(1:length(myr0[1:(mycolor-1)])),title="mean radius");
+#   }
+#   else{
+#      nelements<-length(myr0);
+#      poselements<-seq(from=1,to=nelements,length.out=6);
+#      legend("topleft",legend=signif(myr0[poselements],2),col=poselements,lwd=1,pch=poselements,title="mean radius");
+#   }
 #   mydate<-format(Sys.time(), "%H_%M_%S_%Y");system(paste("sh sendmail.sh SteadyStateFig","_",mydate," charles.santana@gmail.com ",outputfilename,sep=""));
    dev.off();
 }

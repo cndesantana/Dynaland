@@ -12,11 +12,11 @@ using Dynaland
 #;# To define a way to identify the steady state (based on the ratio between sd(rich)/mean(rich), for example
 #;# To check if the number of species in the steady stae matches with the literature (paper in PRE 2003, that says that we would expect 240 species in our system for steady state)
  
-function main(mode_)
+function main(mode_,nvals_)
 	
         println("Testing Dynaland.jl");
         mode = parse(Int,mode_);#mode 1 means static landscape, mode 2 means dynamic landscape
-        nvals = 3;#number of values of the parameters space
+        nvals = parse(Int,nvals_);#number of values of the parameters space
 	seed = 1;#seed for random numbers (to control the outputs)
 	nreal = 1;#Number of realizations
 	Gmax = 1000;#Maximum number of Generations
@@ -25,13 +25,13 @@ function main(mode_)
 	J = 100;#Number of inds. per site
 	mr = 0.3;#migration between sites 
 	vr = 0.003;#migration from the regional pool (speciation)
-        sufix = "Static_";
+        sufix = "Static";
         if(mode == 2)
-           sufix = "Dynamic_";
+           sufix = "Dynamic";
         end
-        landscapeoutputs = "LandscapeOutputs_$sufix$Gmax.txt";
-        sitesoutputs = "SitesOutputs_$sufix$Gmax.txt";
-        phylogenyoutputs = "PhylogenyOutputs_$sufix$Gmax.txt";
+        landscapeoutputs = string("LandscapeOutputs_",sufix,"_nvals",nvals,"_mr",mr,"_G",Gmax,".txt");
+        sitesoutputs = string("SitesOutputs_",sufix,"_nvals",nvals,"_mr",mr,"_G",Gmax,".txt");
+        phylogenyoutputs = string("PhylogenyOutputs_",sufix,"_nvals",nvals,"_mr",mr,"_G",Gmax,".txt");
 
         Dynaland.Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sitesoutputs,phylogenyoutputs);
 
@@ -40,4 +40,4 @@ function main(mode_)
 #        run(command);
 end
 
-main(ARGS[1]);
+main(ARGS[1],ARGS[2]);

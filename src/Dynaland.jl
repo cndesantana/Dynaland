@@ -126,20 +126,19 @@ function SeasonalRGN(r0,A,f,S,count,w)
 	D = zeros(S,S);
 	Di = zeros(S,S);
  
-	r = r0 + A*sin(pi*f*count);#Seasonal RGN
-
-	for i in 1:S-1;
-		for j in i+1:S;
-			dx = (w[i,1] - w[j,1])*(w[i,1] - w[j,1]);
-			dy = (w[i,2] - w[j,2])*(w[i,2] - w[j,2]);
-			dist = sqrt(dx + dy);
-			if (dist[1] <= r)
-				D[i,j] = 1;
-			end
-			Di[i,j] = dist[1];
-		end
-	end
-	r, D, Di;
+	r = r0 + r0*A*sin(pi*f*count);#Seasonal RGN
+        for i in 1:S-1;
+        	for j in i+1:S;
+        		dx = (w[i,1] - w[j,1])*(w[i,1] - w[j,1]);
+        		dy = (w[i,2] - w[j,2])*(w[i,2] - w[j,2]);
+        		dist = sqrt(dx + dy);
+        		if (dist[1] <= r)
+        			D[i,j] = 1;
+        		end
+        		Di[i,j] = dist[1];
+        	end
+        end
+        return r, D, Di;
 end
 
 
@@ -161,7 +160,7 @@ function GetRichness(R,S)
 end
 
 
-function OutputPerComponent(outputfilepercomp,r,r0,A,f,k,R,S,g,comp,ncomp,gamma)
+function OutputPerComponent(outputfilepercomp,minDi,maxDi,rc,r0,A,f,k,R,S,g,comp,ncomp,gamma)
 	for i in 1:ncomp 
 		nverts=length(comp[i]);
 		richnessspeciesR = [];
@@ -172,14 +171,14 @@ function OutputPerComponent(outputfilepercomp,r,r0,A,f,k,R,S,g,comp,ncomp,gamma)
 			richnessspeciesR = [richnessspeciesR; unique(AR)]; 
 		end;
 		gammacomp = length(unique(sort(richnessspeciesR)));
-		writedlm(outputfilepercomp, [r r0 A f k i nverts sum/2 gammacomp gamma], ' ');
+		writedlm(outputfilepercomp, [minDi maxDi rc r0 A f k i nverts sum/2 gammacomp gamma], ' ');
 	end
 	flush(outputfilepercomp);#To print in the output file each realization
 end
 
 
-function Output(outputfile,lastspecies,ri,S,J,G,maxDi,minDi,r0,A,f,cdynamics,vr,mr,Mr_gamma,Vr_gamma,Vr_r,Mr_r,Vr_t,Mr_t,Vr_e,Mr_e,Vr_c,Mr_c);
-	writedlm(outputfile, [ri G maxDi minDi r0 A f cdynamics/G S J vr mr Mr_gamma Vr_gamma lastspecies Vr_r Mr_r Vr_t Mr_t Vr_e Mr_e Vr_c Mr_c], ' ');
+function Output(outputfile,lastspecies,ri,S,J,G,maxDi,minDi,rc,r0,A,f,cdynamics,vr,mr,Mr_gamma,Vr_gamma,Vr_r,Mr_r,Vr_t,Mr_t,Vr_e,Mr_e,Vr_c,Mr_c);
+	writedlm(outputfile, [ri G maxDi minDi rc r0 A f cdynamics/G S J vr mr Mr_gamma Vr_gamma lastspecies Vr_r Mr_r Vr_t Mr_t Vr_e Mr_e Vr_c Mr_c], ' ');
 	flush(outputfile);#To print in the output file each realization
 
 	return; 
@@ -194,17 +193,19 @@ function CladogenesisEvent(R,Sti,Individual,lastspecies,ts,phylogenyfile,ri,mr,v
 	return R,newspeciesClado; 
 end
 
-function MigrationEvent(R,KillHab,MigrantHab,KillInd,Dc,J,S)
+function MigrationEvent(R,KillHab,KillInd,Dc,J,S)
+	MigrantHab = rand()*maximum(Dc[KillHab,:]);
 	target = KillHab;
 	source=findfirst(Dc[target,:].>=MigrantHab);
         MigrantInd = rand(1:J);
         R[target,KillInd] = R[source,MigrantInd];
-	return R;
+	return R,MigrantHab;
 end;
 
-function BirthEvent(R,BirthLocal,KillInd,KillHab)
+function BirthEvent(R,KillInd,KillHab,J)
+	BirthLocal = rand(1:J);#which individual to born
 	R[KillHab,KillInd] = R[KillHab,BirthLocal];
-	return R;
+	return R,BirthLocal;
 end
 
 function printPhylogeny(new,old,ts,phylogenyfile,ri,mr,vr)
@@ -225,27 +226,20 @@ function initialPopulation(S,J)
 end
 
 function demography(S,J,D,Dc,mr,vr,R,lastspecies,ri,ts,phylogenyfile)
-	for (j = 1:(S*J))#For each individual in each site
-                realmr = mr;
-       		#Demography - Resources
+	for (ji = 1:(S*J))#For each individual in each site
+                realmr = mr;#Real migration rate, that can be zero if the landscape represents the "infinite island scenario" (all patches are isolated)
        		KillHab = rand(1:S);#which site to kill
 		KillInd = rand(1:J);#which individual to kill
-		mvb = rand();
-		MigrantHab = rand()*maximum(Dc[KillHab,:]);
-		BirthLocal = rand(1:J);#which individual to born
                 if(sum(Dc) == 0)
-                   realmr = 0;
+                   realmr = 0;#if there is no connectivity between patches, the real migration rate is 0 (there is no migration event, and there are more birth events as the sum between birth and speciation rates is still 1).
                 end
-       		if mvb <= realmr;#Migration event
-			if(sum(Dc) > 0)#to guarantee that the migration will not occur if the landscape is completed disconnected
-				R = MigrationEvent(R,KillHab,MigrantHab,KillInd,Dc,J,S);
-			end
-
-       		elseif (mvb > realmr) && (mvb <= realmr+vr);#Cladogenesis Speciation event
+		mvb = rand();
+       		if (mvb <= realmr) && (mvb != 0)                  #;#Migration event
+			R,MigrantHab = MigrationEvent(R,KillHab,KillInd,Dc,J,S);
+       		elseif (mvb > realmr) && (mvb <= realmr+vr)       #;#Cladogenesis Speciation event
 			R,lastspecies = CladogenesisEvent(R,KillHab,KillInd,lastspecies,ts,phylogenyfile,ri,realmr,vr);
-
-       		else #Birth event
-			R = BirthEvent(R,BirthLocal,KillInd,KillHab);
+       		else                                              #;#Birth event
+			R,BirthLocal = BirthEvent(R,KillInd,KillHab,J);
        		end;
 	end;#end S*J
 	
@@ -258,14 +252,14 @@ end
 # Y - is the power of the highest value in the series
 # Z - is the number of elements you want to have between 10^X and 10^Y.
 # mode can be 1 or 2. If 'mode' has value 1, the model is static. If it has value 2, the model is dynamic
-function getParameterValues(mode,highest,lowest,nvals)
-    step = (highest-lowest)/nvals;
-    R0s = [0.001;collect(lowest:step:highest)];
-#    R0s = 0.001
+function getParameterValues(mode,highestfreq,lowestfreq,halfmaxDist,minDist,nvals)
+    radisolated = minDist/10;# in the infinite island scenario, we use the radius value as one order of magnitude lower than the minimum distance between patches 
+    stepmeanrad = (halfmaxDist-minDist)/nvals;
+    R0s = [radisolated;collect(minDist:stepmeanrad:halfmaxDist)];
     if(mode == 2)
+        stepfreq = (highestfreq-lowestfreq)/nvals;
         As = 1;
-#        As = [0.001;collect(lowest:step:highest)];
-        Fs = [0.001;collect(lowest:step:highest)];
+        Fs = collect(lowestfreq:stepfreq:highestfreq);
     elseif (mode == 1)
         As = 0;
         Fs = 0;
@@ -276,21 +270,21 @@ end
 function createOutputFiles(landscapeoutputs,sitesoutputs,phylogenyoutputs)
 	if(isfile(landscapeoutputs)==false)
 		outputfile = open(landscapeoutputs,"w");
-		writedlm(outputfile,["ri G maxDi minDi r0 A f cdynamics/G S J vr mr Mr_Gamma Vr_gamma lastspecies Vr_r Mr_r Vr_t Mr_t Vr_e Mr_e Vr_c Mr_c"]);
+		writedlm(outputfile,["ri G maxDi minDi rc r0 A f cdynamics/G S J vr mr Mr_Gamma Vr_gamma lastspecies Vr_r Mr_r Vr_t Mr_t Vr_e Mr_e Vr_c Mr_c"]);
 		close(outputfile);
         end
 
 	if(isfile(sitesoutputs)==false)
         	outputfilepercomp = open(sitesoutputs,"w");
-        	writedlm(outputfilepercomp, ["ri r0 A f G Ncomponents Nverts Nedges GammaPerComponent Gamma"]);
+        	writedlm(outputfilepercomp, ["minDi maxDi rc r0 A f G Ncomponents Nverts Nedges GammaPerComponent Gamma"]);
         	close(outputfilepercomp);#To close 
         end
 
-	if(isfile(phylogenyoutputs)==false)
-		phylogenyfile = open(phylogenyoutputs,"w")	
-		writedlm(phylogenyfile,["ri mr vr Ancestral Derived Age"]); 
-		close(phylogenyfile);
-	end
+#	if(isfile(phylogenyoutputs)==false)
+#		phylogenyfile = open(phylogenyoutputs,"w")	
+#		writedlm(phylogenyfile,["ri mr vr Ancestral Derived Age"]); 
+#		close(phylogenyfile);
+#	end
 end
 
 ###################### Dynamic of the model
@@ -310,8 +304,9 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 		w = rand(S,2);#the location of the points of the landscape.
                 minDi, maxDi, Di=getMatrixDistanceRGN(S,w);
 		Amax = (maxDi - minDi)/2;
-
-                As,Fs,R0s = getParameterValues(mode,1,0.01,nvals);
+                minfreq = 1/G;#the frequency that guarantees that we will have at least one entire cycle along the generations. 
+#                As,Fs,R0s = getParameterValues(mode,1,maximum(collect([minfreq,0.01])),maxDi/2,minDi,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
+                As,Fs,R0s = getParameterValues(mode,1,maximum(collect([minfreq,0.01])),maxDi,minDi,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
 
 ###### 	ISOLATED SITES AS INITIAL RGN	
 		r0 = R0s[1];
@@ -346,7 +341,7 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 #;#                                        println(open("initialpopulation.txt","w"),R);
 					gamma = lastspecies;
 					for (k = 1:G)#%metacommunity dynamic (not-tracking multitrophic metacommunity dynamics!)
-						OutputPerComponent(outputfilepercomp,r,r0,A,f,k-1,R,S,g,comp,ncomp,gamma);
+						OutputPerComponent(outputfilepercomp,minDi,maxDi,r,r0,A,f,k-1,R,S,g,comp,ncomp,gamma);
 						r_randomdynamics[k] = r;
 						t_randomdynamics[k] = gtrans;
 						e_randomdynamics[k] = nedges;
@@ -366,7 +361,7 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 						gamma = GetRichness(R,S);
 						push!(partialgamma,gamma);
 					end
-					OutputPerComponent(outputfilepercomp,r,r0,A,f,G,R,S,g,comp,ncomp,gamma);
+					OutputPerComponent(outputfilepercomp,minDi,maxDi,r,r0,A,f,G,R,S,g,comp,ncomp,gamma);
                                         flush(phylogenyfile); 
 					r_randomdynamics[Gmax+1] = r;
 					t_randomdynamics[Gmax+1] = gtrans;
@@ -385,7 +380,7 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 					Vr_c =  var(c_randomdynamics[middle_point:end]);	
 					Vr_gamma =  var(partialgamma[middle_point:end]);
 					Mr_gamma =  mean(partialgamma[middle_point:end]);
-					Output(outputfile,lastspecies,ri,S,J,G,maxDi,minDi,r0,A,f,cdynamics,vr,mr,Mr_gamma,Vr_gamma,Vr_r,Mr_r,Vr_t,Mr_t,Vr_e,Mr_e,Vr_c,Mr_c);
+					Output(outputfile,lastspecies,ri,S,J,G,maxDi,minDi,r,r0,A,f,cdynamics,vr,mr,Mr_gamma,Vr_gamma,Vr_r,Mr_r,Vr_t,Mr_t,Vr_e,Mr_e,Vr_c,Mr_c);
 					iF = iF+1;
 				end#while nf
 				iA = iA+1;

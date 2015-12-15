@@ -10,4 +10,3 @@ inputfilename<-args[1];
 dat<-read.csv(inputfilename,sep=" ")
 
 plotAreaRichness(inputfilename,dat);
-
