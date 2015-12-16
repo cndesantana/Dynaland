@@ -176,8 +176,15 @@ function OutputPerComponent(outputfilepercomp,minDi,maxDi,rc,r0,A,f,k,R,S,g,comp
 	flush(outputfilepercomp);#To print in the output file each realization
 end
 
+function OutputPerGeneration(outputfilepergen,lastspecies,ri,S,J,G,maxDi,minDi,rc,r0,A,f,vr,mr,gamma,gtrans,nedges,ncomp)
+	writedlm(outputfilepergen, [ri maxDi minDi S J vr mr rc r0 A f G gtrans nedges ncomp gamma lastspecies], ' ');
+	flush(outputfilepergen);#To print in the output file each realization
+	return; 
+end
 
-function Output(outputfile,lastspecies,ri,S,J,G,maxDi,minDi,rc,r0,A,f,cdynamics,vr,mr,Mr_gamma,Vr_gamma,Vr_r,Mr_r,Vr_t,Mr_t,Vr_e,Mr_e,Vr_c,Mr_c);
+
+
+function Output(outputfile,lastspecies,ri,S,J,G,maxDi,minDi,rc,r0,A,f,cdynamics,vr,mr,Mr_gamma,Vr_gamma,Vr_r,Mr_r,Vr_t,Mr_t,Vr_e,Mr_e,Vr_c,Mr_c)
 	writedlm(outputfile, [ri G maxDi minDi rc r0 A f cdynamics/G S J vr mr Mr_gamma Vr_gamma lastspecies Vr_r Mr_r Vr_t Mr_t Vr_e Mr_e Vr_c Mr_c], ' ');
 	flush(outputfile);#To print in the output file each realization
 
@@ -267,12 +274,19 @@ function getParameterValues(mode,highestfreq,lowestfreq,halfmaxDist,minDist,nval
     return As,Fs,R0s;
 end
 
-function createOutputFiles(landscapeoutputs,sitesoutputs,phylogenyoutputs)
+function createOutputFiles(landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen)
 	if(isfile(landscapeoutputs)==false)
 		outputfile = open(landscapeoutputs,"w");
-		writedlm(outputfile,["ri G maxDi minDi rc r0 A f cdynamics/G S J vr mr Mr_Gamma Vr_gamma lastspecies Vr_r Mr_r Vr_t Mr_t Vr_e Mr_e Vr_c Mr_c"]);
+		writedlm(outputfile,["ri G maxDi minDi rc r0 A f cdynamics/G S J vr mr Mr_Gamma Vr_Gamma lastspecies Vr_r Mr_r Vr_t Mr_t Vr_e Mr_e Vr_c Mr_c"]);
 		close(outputfile);
         end
+
+	if(isfile(landscapeoutputpergen)==false)
+		outputfilepergen = open(landscapeoutputpergen,"w");
+	        writedlm(outputfilepergen, ["ri maxDi minDi S J vr mr rc r0 A f G gtrans nedges ncomp Gamma lastspecies"]);
+		close(outputfilepergen);
+        end
+
 
 	if(isfile(sitesoutputs)==false)
         	outputfilepercomp = open(sitesoutputs,"w");
@@ -280,21 +294,22 @@ function createOutputFiles(landscapeoutputs,sitesoutputs,phylogenyoutputs)
         	close(outputfilepercomp);#To close 
         end
 
-#	if(isfile(phylogenyoutputs)==false)
-#		phylogenyfile = open(phylogenyoutputs,"w")	
-#		writedlm(phylogenyfile,["ri mr vr Ancestral Derived Age"]); 
-#		close(phylogenyfile);
-#	end
+	if(isfile(phylogenyoutputs)==false)
+		phylogenyfile = open(phylogenyoutputs,"w")	
+		writedlm(phylogenyfile,["ri mr vr Ancestral Derived Age"]); 
+		close(phylogenyfile);
+	end
 end
 
 ###################### Dynamic of the model
 
-function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sitesoutputs,phylogenyoutputs)
+function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen)
 
-	createOutputFiles(landscapeoutputs,sitesoutputs,phylogenyoutputs);
+	createOutputFiles(landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen);
 	outputfile = open(landscapeoutputs,"a");
 	outputfilepercomp = open(sitesoutputs,"a");
 	phylogenyfile = open(phylogenyoutputs,"a");
+	outputfilepergen = open(landscapeoutputpergen,"a");
 
 	for (ri in 1:nreal)#realizations
 		srand(seed+(7*ri));
@@ -347,6 +362,7 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 						e_randomdynamics[k] = nedges;
 						c_randomdynamics[k] = ncomp;
 						partialgamma[k] = gamma;
+					        OutputPerGeneration(outputfilepergen,lastspecies,ri,S,J,k-1,maxDi,minDi,r,r0,A,f,vr,mr,gamma,gtrans,nedges,ncomp);
 						if((k % landG) == 0)#The parameter landG defines how often landscape is updated
 							cdynamics = cdynamics + 1;
 							r, D, Di = SeasonalRGN(r0,A,f,S,cdynamics,w);#Static landscape: A == 0
@@ -362,6 +378,7 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 						push!(partialgamma,gamma);
 					end
 					OutputPerComponent(outputfilepercomp,minDi,maxDi,r,r0,A,f,G,R,S,g,comp,ncomp,gamma);
+					OutputPerGeneration(outputfilepergen,lastspecies,ri,S,J,G,maxDi,minDi,r,r0,A,f,vr,mr,gamma,gtrans,nedges,ncomp);
                                         flush(phylogenyfile); 
 					r_randomdynamics[Gmax+1] = r;
 					t_randomdynamics[Gmax+1] = gtrans;
@@ -391,6 +408,7 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 	close(outputfile);
         close(outputfilepercomp);#To close 
 	close(phylogenyfile);
+	close(outputfilepergen);
 end#Dynamic
 
 
