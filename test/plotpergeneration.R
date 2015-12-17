@@ -11,7 +11,7 @@ getExtinctionRate<-function(dat,i,nGen,sprate,S,J){
 
 
 plotrichness<-function(dat,filename){
-   allcolors<-c("black","red","green","blue","orange","purple","cyan","brown","lightblue","lightgreen","pink")
+   allcolors<-c("black","red","green","blue","orange","purple","cyan","brown","lightblue","lightgreen","pink","gray75")
    nGen<-max(dat$G)+1;
    myrc<-as.numeric(names(table(dat$rc)))
    mycolors<-allcolors[1:length(myrc)];
@@ -34,7 +34,7 @@ plotrichness<-function(dat,filename){
 }
 
 plotextinctionrate<-function(dat,filename){
-   allcolors<-c("black","red","green","blue","orange","purple","cyan","brown","lightblue","lightgreen","pink")
+   allcolors<-c("black","red","green","blue","orange","purple","cyan","brown","lightblue","lightgreen","pink","gray75")
    nGen<-max(dat$G)+1;
    sprate<-dat$vr[1];
    S<-dat$S[1];
@@ -59,10 +59,14 @@ plotextinctionrate<-function(dat,filename){
    dev.off();
 }
 
-inputfile<-"./LandscapeOutputsPerGen_Static_nvals3_mr0.3_G200.txt";
-dat<-read.csv(inputfile,sep=" ")
-richfile<-"./Richness_Static_nvals3_mr0_3_G200.png"
-plotrichness(dat,richfile);
-extratefile<-"./ExtinctionRate_Static_nvals3_mr0_3_G200.png"
-plotextinctionrate(dat,extratefile);
+args <- commandArgs(trailingOnly = TRUE)
+dat<-read.csv(args,sep=" ")
 
+split_filename<-unlist(strsplit(args,'[.]'))
+inputfile<-paste(".",paste(paste(split_filename[2],split_filename[3],sep='_'),split_filename[4],sep="."),sep="");
+splitinput<-unlist(strsplit(inputfile,'_'))
+sufix<-paste(paste(splitinput[2],splitinput[3],splitinput[4],splitinput[5],unlist(strsplit(splitinput[6],'[.]'))[1],sep="_"),".png",sep="");
+richfile<-paste("./Richness_",sufix,sep="");
+plotrichness(dat,richfile);
+extratefile<-paste("./ExtinctionRate_",sufix,sep="");
+plotextinctionrate(dat,extratefile);
