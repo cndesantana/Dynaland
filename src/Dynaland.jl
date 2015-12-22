@@ -259,7 +259,7 @@ end
 # Y - is the power of the highest value in the series
 # Z - is the number of elements you want to have between 10^X and 10^Y.
 # mode can be 1 or 2. If 'mode' has value 1, the model is static. If it has value 2, the model is dynamic
-function getParameterValues(mode,highestfreq,lowestfreq,halfmaxDist,minDist,nvals)
+function getLinSpaceParameterValues(mode,highestfreq,lowestfreq,halfmaxDist,minDist,nvals)
     radisolated = minDist/10;# in the infinite island scenario, we use the radius value as one order of magnitude lower than the minimum distance between patches 
     stepmeanrad = (halfmaxDist-minDist)/nvals;
     R0s = [radisolated;collect(minDist:stepmeanrad:halfmaxDist)];
@@ -273,6 +273,29 @@ function getParameterValues(mode,highestfreq,lowestfreq,halfmaxDist,minDist,nval
     end
     return As,Fs,R0s;
 end
+
+
+#####To calculate the logarithmic space of parameters, we use the function 'logspace': 
+###logspace(X,Y,Z), where:
+# X - is the power of the lowest value in the series
+# Y - is the power of the highest value in the series
+# Z - is the number of elements you want to have between 10^X and 10^Y.
+# mode can be 1 or 2. If 'mode' has value 1, the model is static. If it has value 2, the model is dynamic
+function getLogSpaceParameterValues(mode,highestfreq,lowestfreq,maxDist,minDist,nvals)
+    radisolated = minDist/10;# in the infinite island scenario, we use the radius value as one order of magnitude lower than the minimum distance between patches 
+    R0s = [radisolated;logspace(log10(minDist),log10(maxDist),nvals)];
+    if(mode == 2)
+        stepfreq = (highestfreq-lowestfreq)/nvals;
+        As = 1;
+        Fs = collect(lowestfreq:stepfreq:highestfreq);
+    elseif (mode == 1)
+        As = 0;
+        Fs = 0;
+    end
+    return As,Fs,R0s;
+end
+
+
 
 function createOutputFiles(landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen)
 	if(isfile(landscapeoutputs)==false)
@@ -318,10 +341,13 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 
 		w = rand(S,2);#the location of the points of the landscape.
                 minDi, maxDi, Di=getMatrixDistanceRGN(S,w);
+                percDi = maxDi * sqrt(4.52 / (4 * pi * S) );
 		Amax = (maxDi - minDi)/2;
                 minfreq = 1/G;#the frequency that guarantees that we will have at least one entire cycle along the generations. 
-#                As,Fs,R0s = getParameterValues(mode,1,maximum(collect([minfreq,0.01])),maxDi/2,minDi,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
-                As,Fs,R0s = getParameterValues(mode,1,maximum(collect([minfreq,0.01])),maxDi,minDi,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
+#                As,Fs,R0s = getLinSpaceParameterValues(mode,1,maximum(collect([minfreq,0.01])),maxDi/2,minDi,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
+#                As,Fs,R0s = getLinSpaceParameterValues(mode,1,maximum(collect([minfreq,0.01])),maxDi,minDi,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
+#                As,Fs,R0s = getLinSpaceParameterValues(mode,1,maximum(collect([minfreq,0.01])),percDi,minDi,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
+                As,Fs,R0s = getLogSpaceParameterValues(mode,1,maximum(collect([minfreq,0.01])),0.26,percDi,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
 
 ###### 	ISOLATED SITES AS INITIAL RGN	
 		r0 = R0s[1];
