@@ -347,7 +347,7 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 #                As,Fs,R0s = getLinSpaceParameterValues(mode,1,maximum(collect([minfreq,0.01])),maxDi/2,minDi,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
 #                As,Fs,R0s = getLinSpaceParameterValues(mode,1,maximum(collect([minfreq,0.01])),maxDi,minDi,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
 #                As,Fs,R0s = getLinSpaceParameterValues(mode,1,maximum(collect([minfreq,0.01])),percDi,minDi,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
-                As,Fs,R0s = getLogSpaceParameterValues(mode,1,maximum(collect([minfreq,0.01])),0.26,percDi,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
+                As,Fs,R0s = getLogSpaceParameterValues(mode,1,minimum(collect([minfreq,0.01])),maxDi,percDi,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
 
 ###### 	ISOLATED SITES AS INITIAL RGN	
 		r0 = R0s[1];
@@ -382,7 +382,7 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 #;#                                        println(open("initialpopulation.txt","w"),R);
 					gamma = lastspecies;
 					for (k = 1:G)#%metacommunity dynamic (not-tracking multitrophic metacommunity dynamics!)
-						OutputPerComponent(outputfilepercomp,minDi,maxDi,r,r0,A,f,k-1,R,S,g,comp,ncomp,gamma);
+#						OutputPerComponent(outputfilepercomp,minDi,maxDi,r,r0,A,f,k-1,R,S,g,comp,ncomp,gamma);
 						r_randomdynamics[k] = r;
 						t_randomdynamics[k] = gtrans;
 						e_randomdynamics[k] = nedges;
@@ -403,7 +403,7 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 						gamma = GetRichness(R,S);
 						push!(partialgamma,gamma);
 					end
-					OutputPerComponent(outputfilepercomp,minDi,maxDi,r,r0,A,f,G,R,S,g,comp,ncomp,gamma);
+#					OutputPerComponent(outputfilepercomp,minDi,maxDi,r,r0,A,f,G,R,S,g,comp,ncomp,gamma);
 					OutputPerGeneration(outputfilepergen,lastspecies,ri,S,J,G,maxDi,minDi,r,r0,A,f,vr,mr,gamma,gtrans,nedges,ncomp);
                                         flush(phylogenyfile); 
 					r_randomdynamics[Gmax+1] = r;
