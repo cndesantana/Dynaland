@@ -30,10 +30,10 @@ function main(mode_,nvals_,gmax_,mr_,jsdev_,jmean_)
         if(mode == 2)
            sufix = "Dynamic";
         end
-        landscapeoutputs = string("LandscapeOutputs_",sufix,"_nvals",nvals,"_mr",mr,"_G",Gmax,".txt");
-        sitesoutputs = string("SitesOutputs_",sufix,"_nvals",nvals,"_mr",mr,"_G",Gmax,".txt");
-        phylogenyoutputs = string("PhylogenyOutputs_",sufix,"_nvals",nvals,"_mr",mr,"_G",Gmax,".txt");
-        landscapeoutputpergen = string("LandscapeOutputsPerGen_",sufix,"_nvals",nvals,"_mr",mr,"_G",Gmax,".txt");
+        landscapeoutputs = string("LandscapeOutputs_",sufix,"_nvals",nvals,"_mr",mr,"_G",Gmax,"_J",Jmean,"_sd",Jsdev,".txt");
+        sitesoutputs = string("SitesOutputs_",sufix,"_nvals",nvals,"_mr",mr,"_G",Gmax,"_J",Jmean,"_sd",Jsdev,".txt");
+        phylogenyoutputs = string("PhylogenyOutputs_",sufix,"_nvals",nvals,"_mr",mr,"_G",Gmax,"_J",Jmean,"_sd",Jsdev,".txt");
+        landscapeoutputpergen = string("LandscapeOutputsPerGen_",sufix,"_nvals",nvals,"_mr",mr,"_G",Gmax,"_J",Jmean,"_sd",Jsdev,".txt");
 
         Dynaland.Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,Jmean,Jsdev,mr,vr,landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen);
 
