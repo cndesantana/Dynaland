@@ -283,11 +283,12 @@ end
 # mode can be 1 or 2. If 'mode' has value 1, the model is static. If it has value 2, the model is dynamic
 function getLogSpaceParameterValues(mode,highestfreq,lowestfreq,maxDist,minDist,nvals)
     radisolated = minDist/10;# in the infinite island scenario, we use the radius value as one order of magnitude lower than the minimum distance between patches 
-    R0s = [radisolated;logspace(log10(minDist),log10(maxDist),nvals)];
+    R0s = [0;logspace(log10(minDist),log10(maxDist),nvals)];
     if(mode == 2)
         stepfreq = (highestfreq-lowestfreq)/nvals;
         As = 1;
-        Fs = collect(lowestfreq:stepfreq:highestfreq);
+#        Fs = collect(lowestfreq:stepfreq:highestfreq);
+        Fs = [0;logspace(log10(lowestfreq),log10(highestfreq),nvals)];
     elseif (mode == 1)
         As = 0;
         Fs = 0;
@@ -347,6 +348,7 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 #                As,Fs,R0s = getLinSpaceParameterValues(mode,1,maximum(collect([minfreq,0.01])),maxDi/2,minDi,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
 #                As,Fs,R0s = getLinSpaceParameterValues(mode,1,maximum(collect([minfreq,0.01])),maxDi,minDi,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
 #                As,Fs,R0s = getLinSpaceParameterValues(mode,1,maximum(collect([minfreq,0.01])),percDi,minDi,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
+#                As,Fs,R0s = getLogSpaceParameterValues(mode,1,minimum(collect([minfreq,0.01])),percDi,minDi,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
                 As,Fs,R0s = getLogSpaceParameterValues(mode,1,minimum(collect([minfreq,0.01])),maxDi,percDi,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
 
 ###### 	ISOLATED SITES AS INITIAL RGN	
