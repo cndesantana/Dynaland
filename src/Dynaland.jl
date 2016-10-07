@@ -2,6 +2,12 @@
 
 module Dynaland 
 
+using StatsBase
+
+function getSampleFromArray(items)
+  return sample(items)
+end
+
 ############Random Geometric Graph functions
 
 using Graphs
@@ -146,17 +152,18 @@ end
 #########Demographic functions
 
 
-function GetRichness(R,S)
+function GetRichness(R,S,alpharich)
 	richnessspeciesR = [];
 	#%gamma richness
 	for (i in 1:S)
-		AR = sort(R'[:,i])
+		AR = sort(R[i])
 		richnessspeciesR = [richnessspeciesR; unique(AR)]; 
+		@inbounds alpharich[i] = length(unique(AR));
 	end;
 	extantR = length(unique(sort(richnessspeciesR)));
 	gamma = extantR;
 
-	return gamma;
+	return gamma,alpharich;
 end
 
 
@@ -167,7 +174,7 @@ function OutputPerComponent(outputfilepercomp,minDi,maxDi,rc,r0,A,f,k,R,S,g,comp
 		sum=0;
 		for u in comp[i]
 			sum=sum+length(out_edges(u,g));
-			AR = sort(R'[:,u])
+			AR = sort(R[u])
 			richnessspeciesR = [richnessspeciesR; unique(AR)]; 
 		end;
 		gammacomp = length(unique(sort(richnessspeciesR)));
@@ -176,16 +183,20 @@ function OutputPerComponent(outputfilepercomp,minDi,maxDi,rc,r0,A,f,k,R,S,g,comp
 	flush(outputfilepercomp);#To print in the output file each realization
 end
 
-function OutputPerGeneration(outputfilepergen,lastspecies,ri,S,J,G,maxDi,minDi,rc,r0,A,f,vr,mr,gamma,gtrans,nedges,ncomp)
-	writedlm(outputfilepergen, [ri maxDi minDi S J vr mr rc r0 A f G gtrans nedges ncomp gamma lastspecies], ' ');
+function OutputPerGeneration(outputfilepergen,lastspecies,ri,S,Ji,G,maxDi,minDi,rc,r0,A,f,vr,mr,gamma,alpharich,gtrans,nedges,ncomp)
+	for i in 1:S
+	    writedlm(outputfilepergen, [ri maxDi minDi i Ji[i] vr mr rc r0 A f G gtrans nedges ncomp gamma alpharich[i] lastspecies], ' ');
+        end
 	flush(outputfilepergen);#To print in the output file each realization
 	return; 
 end
 
 
 
-function Output(outputfile,lastspecies,ri,S,J,G,maxDi,minDi,rc,r0,A,f,cdynamics,vr,mr,Mr_gamma,Vr_gamma,Vr_r,Mr_r,Vr_t,Mr_t,Vr_e,Mr_e,Vr_c,Mr_c)
-	writedlm(outputfile, [ri G maxDi minDi rc r0 A f cdynamics/G S J vr mr Mr_gamma Vr_gamma lastspecies Vr_r Mr_r Vr_t Mr_t Vr_e Mr_e Vr_c Mr_c], ' ');
+function Output(outputfile,lastspecies,ri,S,Ji,G,maxDi,minDi,rc,r0,A,f,cdynamics,vr,mr,Mr_gamma,Vr_gamma,alpharich,Vr_r,Mr_r,Vr_t,Mr_t,Vr_e,Mr_e,Vr_c,Mr_c)
+	for i in 1:S
+		writedlm(outputfile, [ri G maxDi minDi rc r0 A f cdynamics/G i Ji[i] vr mr Mr_gamma Vr_gamma alpharich[i] lastspecies Vr_r Mr_r Vr_t Mr_t Vr_e Mr_e Vr_c Mr_c], ' ');
+	end
 	flush(outputfile);#To print in the output file each realization
 
 	return; 
@@ -194,59 +205,115 @@ end
 
 function CladogenesisEvent(R,Sti,Individual,lastspecies,ts,phylogenyfile,ri,mr,vr)
 	newspeciesClado = lastspecies + 1;
-#        printPhylogeny(newspeciesClado,R[Sti,Individual],ts,phylogenyfile,ri,mr,vr);
-   	R[Sti,Individual] = newspeciesClado;
+#        printPhylogeny(newspeciesClado,R[Sti][Individual],ts,phylogenyfile,ri,mr,vr);
+   	R[Sti][Individual] = newspeciesClado;
 
 	return R,newspeciesClado; 
 end
 
-function MigrationEvent(R,KillHab,KillInd,Dc,J,S)
+function MigrationEvent(R,KillHab,KillInd,Dc,Ji,S)
 	MigrantHab = rand()*maximum(Dc[KillHab,:]);
 	target = KillHab;
-	source=findfirst(Dc[target,:].>=MigrantHab);
-        MigrantInd = rand(1:J);
-        R[target,KillInd] = R[source,MigrantInd];
+	allpos = find(Dc[target,:] .>= MigrantHab);#All the sites at a distance lower than the threshold 'MigrantHab'
+	source = minimum(allpos[find(allpos .!= KillHab)]);
+#	source = findfirst(Dc[target,:].>=MigrantHab);
+	MigrantInd = rand(1:Ji[source]);
+	#println("2.5.2.1-typeof(R) = ",typeof(R));
+        R[target][KillInd] = R[source][MigrantInd];
+	#println("2.5.2.2-typeof(R) = ",typeof(R));
 	return R,MigrantHab;
 end;
 
-function BirthEvent(R,KillInd,KillHab,J)
-	BirthLocal = rand(1:J);#which individual to born
-	R[KillHab,KillInd] = R[KillHab,BirthLocal];
-	return R,BirthLocal;
+function BirthEvent(R,KillInd,KillHab,BirthLocal,Ji)
+        #println("KillInd = ",KillInd);
+        #println("BirthLocal = ",BirthLocal);
+        #println("length(Ji) = ",length(Ji));
+	#println("2.5.3.1-typeof(R) = ",typeof(R));
+	R[KillHab][KillInd] = R[KillHab][BirthLocal];
+	#println("2.5.3.2-typeof(R) = ",typeof(R));
+	return R;
 end
 
 function printPhylogeny(new,old,ts,phylogenyfile,ri,mr,vr)
 	writedlm(phylogenyfile,[ri mr vr old new ts],' ');
 end
 
-#Each site starts with one different species
-function initialPopulation(S,J)
-   R = zeros(S,J);
-   lastspecies = 0;
-   for(iJ in 1:J)#iterating over columns
-      for(iS in 1:S)
-         R[iS,iJ] = iS;
-         lastspecies = iS; 
-      end
-   end   
-   return R,lastspecies;
+###Each site starts with one different species
+##function initialPopulation(S,J)
+##   R = zeros(S,J);
+##   lastspecies = 0;
+##   for(iJ in 1:J)#iterating over columns
+##      for(iS in 1:S)
+##         R[iS,iJ] = iS;
+##         lastspecies = iS; 
+##      end
+##   end   
+##   return R,lastspecies;
+##end
+
+function repeatval(x,N)
+  return map(v -> v=x,1:N);
 end
 
-function demography(S,J,D,Dc,mr,vr,R,lastspecies,ri,ts,phylogenyfile)
-	for (ji = 1:(S*J))#For each individual in each site
+#Each site starts with one different species
+function initialPopulation(R,Ji)
+  lastspecies = 0;
+  for(iJ in Ji)#iterating over columns
+     lastspecies = lastspecies+1;
+     popi = repeatval(lastspecies,iJ);
+     push!(R,popi);
+  end
+  return R,lastspecies;
+end
+
+## return a random sample of N numbers from a normal (Gaussian) distribution
+function rand_normal(mean, stdev, N)
+    if stdev < 0.0
+        error("standard deviation must be positive")
+    end
+    rn = zeros(Int,N);
+    for(i in 1:N)
+        u1 = rand()
+        u2 = rand()
+        r = sqrt( -2.0*log(u1) )
+        theta = 2.0*pi*u2
+        rn[i] = round(Int,mean + stdev*r*sin(theta));#vector of random integer numbers
+    end
+    return(rn);
+end
+
+function demography(S,Ji,D,Dc,mr,vr,R,lastspecies,ri,ts,phylogenyfile)
+	for (ji = 1:(S*sum(Ji)))#For each individual in each site
+                #println("ji = ",ji);
                 realmr = mr;#Real migration rate, that can be zero if the landscape represents the "infinite island scenario" (all patches are isolated)
        		KillHab = rand(1:S);#which site to kill
-		KillInd = rand(1:J);#which individual to kill
+        	#println("KillHab = ",KillHab);
+        	#println("Ji[KillHab] = ",Ji[KillHab]);
+#		KillInd = rand(1:J);#which individual to kill
+		KillInd = rand(1:Ji[KillHab]);#which individual to kill
+        	#println("KillInd = ",KillInd);
+		#println("R = ",size(R));
+		#println("R[KillHab] = ",length(R[KillHab]));
+                BirthLocal = getSampleFromArray(1:length(R[KillHab]));#which individual to born
+#                BirthLocal = rand(1:length(R[KillHab]));#which individual to born
+        	#println("BirthLocal = ",BirthLocal);
+
                 if(sum(Dc) == 0)
                    realmr = 0;#if there is no connectivity between patches, the real migration rate is 0 (there is no migration event, and there are more birth events as the sum between birth and speciation rates is still 1).
                 end
 		mvb = rand();
        		if (mvb <= realmr) && (mvb != 0)                  #;#Migration event
-			R,MigrantHab = MigrationEvent(R,KillHab,KillInd,Dc,J,S);
+                        #println("Migration!");
+			R,MigrantHab = MigrationEvent(R,KillHab,KillInd,Dc,Ji,S);
+			#println("2.5.1-typeof(R) = ",typeof(R));
        		elseif (mvb > realmr) && (mvb <= realmr+vr)       #;#Cladogenesis Speciation event
+                        #println("Clado!");
 			R,lastspecies = CladogenesisEvent(R,KillHab,KillInd,lastspecies,ts,phylogenyfile,ri,realmr,vr);
+			#println("2.5.2-typeof(R) = ",typeof(R));
        		else                                              #;#Birth event
-			R,BirthLocal = BirthEvent(R,KillInd,KillHab,J);
+                        #println("Birth!");
+			R = BirthEvent(R,KillInd,KillHab,BirthLocal,Ji);
+			#println("2.5.3-typeof(R) = ",typeof(R));
        		end;
 	end;#end S*J
 	
@@ -301,13 +368,13 @@ end
 function createOutputFiles(landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen)
 	if(isfile(landscapeoutputs)==false)
 		outputfile = open(landscapeoutputs,"w");
-		writedlm(outputfile,["ri G maxDi minDi rc r0 A f cdynamics/G S J vr mr Mr_Gamma Vr_Gamma lastspecies Vr_r Mr_r Vr_t Mr_t Vr_e Mr_e Vr_c Mr_c"]);
+		writedlm(outputfile,["ri G maxDi minDi rc r0 A f cdynamics/G S Ji vr mr Mr_Gamma Vr_Gamma alpharich lastspecies Vr_r Mr_r Vr_t Mr_t Vr_e Mr_e Vr_c Mr_c"]);
 		close(outputfile);
         end
 
 	if(isfile(landscapeoutputpergen)==false)
 		outputfilepergen = open(landscapeoutputpergen,"w");
-	        writedlm(outputfilepergen, ["ri maxDi minDi S J vr mr rc r0 A f G gtrans nedges ncomp Gamma lastspecies"]);
+	        writedlm(outputfilepergen, ["ri maxDi minDi S Ji vr mr rc r0 A f G gtrans nedges ncomp Gamma alpharich lastspecies"]);
 		close(outputfilepergen);
         end
 
@@ -327,7 +394,7 @@ end
 
 ###################### Dynamic of the model
 
-function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen)
+function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,sdev,mr,vr,landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen)
 
 	createOutputFiles(landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen);
 	outputfile = open(landscapeoutputs,"a");
@@ -349,7 +416,11 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 #                As,Fs,R0s = getLinSpaceParameterValues(mode,1,maximum(collect([minfreq,0.01])),maxDi,minDi,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
 #                As,Fs,R0s = getLinSpaceParameterValues(mode,1,maximum(collect([minfreq,0.01])),percDi,minDi,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
 #                As,Fs,R0s = getLogSpaceParameterValues(mode,1,minimum(collect([minfreq,0.01])),percDi,minDi,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
-                As,Fs,R0s = getLogSpaceParameterValues(mode,1,minimum(collect([minfreq,0.01])),maxDi,percDi,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
+                As1,Fs1,R0s1 = getLogSpaceParameterValues(mode,1,minimum(collect([minfreq,0.01])),percDi,minDi/10,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
+                As2,Fs2,R0s2 = getLogSpaceParameterValues(mode,1,minimum(collect([minfreq,0.01])),maxDi,percDi,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
+		As = [As1 As2];
+		Fs = [Fs1 Fs2];
+		R0s = [R0s1 R0s2];
 
 ###### 	ISOLATED SITES AS INITIAL RGN	
 		r0 = R0s[1];
@@ -379,10 +450,17 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 					partialgamma = zeros(Gmax+1);#store one value of gamma for each generation
 					r = r0;
 					#Metacommunity
-                                        R,lastspecies = initialPopulation(S,J);#start the population of each of the J individuals of each of the S sites.
+                                        Ji = rand_normal(J,sdev,S);#S random numbers with mean J, standard deviation sdev
+					R = [];
+					#println("1-typeof(R) = ",typeof(R));
+					#println("R is empty");
+                                        R,lastspecies = initialPopulation(R,Ji);#start the population of each of the Ji individuals of each of the S sites.
+					#println("2-typeof(R) = ",typeof(R));
+                                        #println("size(R) = ",size(R));
 #                                        println(open("initialpopulation_$r0.txt","w"),R);
 #;#                                        println(open("initialpopulation.txt","w"),R);
 					gamma = lastspecies;
+					alpharich = ones(S);#each site starts with exactly one different species
 					for (k = 1:G)#%metacommunity dynamic (not-tracking multitrophic metacommunity dynamics!)
 #						OutputPerComponent(outputfilepercomp,minDi,maxDi,r,r0,A,f,k-1,R,S,g,comp,ncomp,gamma);
 						r_randomdynamics[k] = r;
@@ -390,7 +468,7 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 						e_randomdynamics[k] = nedges;
 						c_randomdynamics[k] = ncomp;
 						partialgamma[k] = gamma;
-					        OutputPerGeneration(outputfilepergen,lastspecies,ri,S,J,k-1,maxDi,minDi,r,r0,A,f,vr,mr,gamma,gtrans,nedges,ncomp);
+					        OutputPerGeneration(outputfilepergen,lastspecies,ri,S,Ji,k-1,maxDi,minDi,r,r0,A,f,vr,mr,gamma,alpharich,gtrans,nedges,ncomp);
 						if((k % landG) == 0)#The parameter landG defines how often landscape is updated
 							cdynamics = cdynamics + 1;
 							r, D, Di = SeasonalRGN(r0,A,f,S,cdynamics,w);#Static landscape: A == 0
@@ -401,12 +479,14 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 							ncomp = length(comp);
 							nedges = num_edges(g);
 						end
-						R, lastspecies = demography(S,J,D,Dc,mr,vr,R,lastspecies,ri,k,phylogenyfile);
-						gamma = GetRichness(R,S);
+					        #println("2.5-typeof(R) = ",typeof(R));
+						R, lastspecies = demography(S,Ji,D,Dc,mr,vr,R,lastspecies,ri,k,phylogenyfile);
+					        #println("3-typeof(R) = ",typeof(R));
+						gamma,alpharich = GetRichness(R,S,alpharich);
 						push!(partialgamma,gamma);
 					end
 #					OutputPerComponent(outputfilepercomp,minDi,maxDi,r,r0,A,f,G,R,S,g,comp,ncomp,gamma);
-					OutputPerGeneration(outputfilepergen,lastspecies,ri,S,J,G,maxDi,minDi,r,r0,A,f,vr,mr,gamma,gtrans,nedges,ncomp);
+					OutputPerGeneration(outputfilepergen,lastspecies,ri,S,Ji,G,maxDi,minDi,r,r0,A,f,vr,mr,gamma,alpharich,gtrans,nedges,ncomp);
                                         flush(phylogenyfile); 
 					r_randomdynamics[Gmax+1] = r;
 					t_randomdynamics[Gmax+1] = gtrans;
@@ -425,7 +505,7 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sit
 					Vr_c =  var(c_randomdynamics[middle_point:end]);	
 					Vr_gamma =  var(partialgamma[middle_point:end]);
 					Mr_gamma =  mean(partialgamma[middle_point:end]);
-					Output(outputfile,lastspecies,ri,S,J,G,maxDi,minDi,r,r0,A,f,cdynamics,vr,mr,Mr_gamma,Vr_gamma,Vr_r,Mr_r,Vr_t,Mr_t,Vr_e,Mr_e,Vr_c,Mr_c);
+					Output(outputfile,lastspecies,ri,S,Ji,G,maxDi,minDi,r,r0,A,f,cdynamics,vr,mr,Mr_gamma,Vr_gamma,alpharich,Vr_r,Mr_r,Vr_t,Mr_t,Vr_e,Mr_e,Vr_c,Mr_c);
 					iF = iF+1;
 				end#while nf
 				iA = iA+1;
