@@ -394,7 +394,7 @@ end
 
 ###################### Dynamic of the model
 
-function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,sdev,mr,vr,landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen)
+function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,mr,vr,landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen)
 
 	createOutputFiles(landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen);
 	outputfile = open(landscapeoutputs,"a");
