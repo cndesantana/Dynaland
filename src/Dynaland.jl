@@ -355,7 +355,7 @@ function getLogSpaceParameterValues(mode,highestfreq,lowestfreq,maxDist,minDist,
         stepfreq = (highestfreq-lowestfreq)/nvals;
         As = 1;
 #        Fs = collect(lowestfreq:stepfreq:highestfreq);
-        Fs = [0;logspace(log10(lowestfreq),log10(highestfreq),nvals)];
+        Fs = logspace(log10(lowestfreq),log10(highestfreq),nvals);
     elseif (mode == 1)
         As = 0;
         Fs = 0;
@@ -468,7 +468,7 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,sdev,mr,vr,landscapeoutput
 						e_randomdynamics[k] = nedges;
 						c_randomdynamics[k] = ncomp;
 						partialgamma[k] = gamma;
-					        OutputPerGeneration(outputfilepergen,lastspecies,ri,S,Ji,k-1,maxDi,minDi,r,r0,A,f,vr,mr,gamma,alpharich,gtrans,nedges,ncomp);
+#					        OutputPerGeneration(outputfilepergen,lastspecies,ri,S,Ji,k-1,maxDi,minDi,r,r0,A,f,vr,mr,gamma,alpharich,gtrans,nedges,ncomp);
 						if((k % landG) == 0)#The parameter landG defines how often landscape is updated
 							cdynamics = cdynamics + 1;
 							r, D, Di = SeasonalRGN(r0,A,f,S,cdynamics,w);#Static landscape: A == 0
@@ -486,7 +486,7 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,sdev,mr,vr,landscapeoutput
 						push!(partialgamma,gamma);
 					end
 #					OutputPerComponent(outputfilepercomp,minDi,maxDi,r,r0,A,f,G,R,S,g,comp,ncomp,gamma);
-					OutputPerGeneration(outputfilepergen,lastspecies,ri,S,Ji,G,maxDi,minDi,r,r0,A,f,vr,mr,gamma,alpharich,gtrans,nedges,ncomp);
+#					OutputPerGeneration(outputfilepergen,lastspecies,ri,S,Ji,G,maxDi,minDi,r,r0,A,f,vr,mr,gamma,alpharich,gtrans,nedges,ncomp);
                                         flush(phylogenyfile); 
 					r_randomdynamics[Gmax+1] = r;
 					t_randomdynamics[Gmax+1] = gtrans;
