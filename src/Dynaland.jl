@@ -185,7 +185,11 @@ function OutputPerComponent(outputfilepercomp,minDi,maxDi,rc,r0,A,f,k,R,S,g,comp
 end
 
 function OutputDispersionMatrix(dispersionfile,DM)
-        save(dispersionfile, "DM", DM) 
+        save(dispersionfile, "DM", DM);
+#After saving the matrix, we should load it by running the following command in Julia 
+#Pkg.add("HDF5")
+#using HDF5, JLD
+#dispersalmatrix = load("./DispersionMatrix_Static_nvals3_mr0.03_G30_J10_sd0.0.jld")["DM"] 
 	return; 
 end
 
@@ -218,14 +222,14 @@ function CladogenesisEvent(R,Sti,Individual,lastspecies,ts,phylogenyfile,ri,mr,v
 	return R,newspeciesClado; 
 end
 
-function MigrationEvent(R,KillHab,KillInd,Dc,Ji,S,A)
+function MigrationEvent(R,KillHab,KillInd,Dc,Ji,S,DM)
 	MigrantHab = rand()*maximum(Dc[KillHab,:]);
 	target = KillHab;
 	allpos = find(Dc[target,:] .>= MigrantHab);#All the sites at a distance lower than the threshold 'MigrantHab'
 	source = minimum(allpos[find(allpos .!= KillHab)]);
 	MigrantInd = rand(1:Ji[source]);
         R[target][KillInd] = R[source][MigrantInd];
-        DM[source][target] = A[source][target] + 1;#dispersions matrix, in order to calculate the asymetry in migration events
+        DM[source,target] = DM[source,target] + 1;#dispersions matrix, in order to calculate the asymetry in migration events
 	return R,MigrantHab,DM;
 end;
 
@@ -287,7 +291,7 @@ function rand_normal(mean, stdev, N)
     return(rn);
 end
 
-function demography(S,Ji,D,Dc,mr,vr,R,lastspecies,ri,ts,phylogenyfile)
+function demography(S,Ji,D,Dc,DM,mr,vr,R,lastspecies,ri,ts,phylogenyfile)
 	for (ji = 1:(S*sum(Ji)))#For each individual in each site
                 #println("ji = ",ji);
                 realmr = mr;#Real migration rate, that can be zero if the landscape represents the "infinite island scenario" (all patches are isolated)
@@ -322,7 +326,7 @@ function demography(S,Ji,D,Dc,mr,vr,R,lastspecies,ri,ts,phylogenyfile)
        		end;
 	end;#end S*J
 	
-	return R,lastspecies;
+	return R,lastspecies,DM;
 end
 
 #####To calculate the logarithmic space of parameters, we use the function 'logspace': 
@@ -368,7 +372,7 @@ end
 
 
 
-function createOutputFiles(landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen,dispersionoutputs)
+function createOutputFiles(landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen)
 	if(isfile(landscapeoutputs)==false)
 		outputfile = open(landscapeoutputs,"w");
 		writedlm(outputfile,["ri G maxDi minDi rc r0 A f cdynamics/G S Ji vr mr Mr_Gamma Vr_Gamma alpharich lastspecies Vr_r Mr_r Vr_t Mr_t Vr_e Mr_e Vr_c Mr_c"]);
@@ -393,24 +397,17 @@ function createOutputFiles(landscapeoutputs,sitesoutputs,phylogenyoutputs,landsc
 		writedlm(phylogenyfile,["ri mr vr Ancestral Derived Age"]); 
 		close(phylogenyfile);
 	end
-
-	if(isfile(dispersionoutputs)==false)
-		dispersionfile = open(dispersionoutputs,"w");
-		close(dispersionfile);
-        end
-
 end
 
 ###################### Dynamic of the model
 
-function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,sdev,mr,vr,landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen)
+function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,sdev,mr,vr,landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen,dispersionfile)
 
-	createOutputFiles(landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen,dispersionoutputs);
+	createOutputFiles(landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen);
 	outputfile = open(landscapeoutputs,"a");
 	outputfilepercomp = open(sitesoutputs,"a");
 	phylogenyfile = open(phylogenyoutputs,"a");
 	outputfilepergen = open(landscapeoutputpergen,"a");
-	dispersionfile = open(dispersionoutputs,"a");
 
 	for (ri in 1:nreal)#realizations
 		srand(seed+(7*ri));
@@ -490,7 +487,7 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,sdev,mr,vr,landscapeoutput
 							nedges = num_edges(g);
 						end
 					        #println("2.5-typeof(R) = ",typeof(R));
-						R, lastspecies = demography(S,Ji,D,Dc,mr,vr,R,lastspecies,ri,k,phylogenyfile);
+						R, lastspecies, DM = demography(S,Ji,D,Dc,DM,mr,vr,R,lastspecies,ri,k,phylogenyfile);
 					        #println("3-typeof(R) = ",typeof(R));
 						gamma,alpharich = GetRichness(R,S,alpharich);
 						push!(partialgamma,gamma);
@@ -517,7 +514,6 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,sdev,mr,vr,landscapeoutput
 					Mr_gamma =  mean(partialgamma[middle_point:end]);
 					Output(outputfile,lastspecies,ri,S,Ji,G,maxDi,minDi,r,r0,A,f,cdynamics,vr,mr,Mr_gamma,Vr_gamma,alpharich,Vr_r,Mr_r,Vr_t,Mr_t,Vr_e,Mr_e,Vr_c,Mr_c);
                                         OutputDispersionMatrix(dispersionfile,DM);
-                                        flush(dispersionfile);
 					iF = iF+1;
 				end#while nf
 				iA = iA+1;

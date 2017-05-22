@@ -20,11 +20,11 @@ function main(mode_,nvals_,gmax_,mr_,jsdev_,jmean_)
 	Gmax = parse(Int,gmax_);#Maximum number of Generations
 	Jsdev = parse(Float64,jsdev_);#Standard deviation used to define the distribution of patch sizes (number of indidivuals per site)
 	Jmean = parse(Int,jmean_);#Mean Number of inds. per site
+	mr = parse(Float64,mr_);#migration between sites 
 	S = 100;#Number of sites
 	seed = 1;#seed for random numbers (to control the outputs)
 	nreal = 1;#Number of realizations
 	landG = 1;#Number of generations before a landscape upgrade
-	mr = parse(Float64,mr_);#migration between sites 
 	vr = 0.003;#migration from the regional pool (speciation)
         sufix = "Static";
         if(mode == 2)
