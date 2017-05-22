@@ -3,6 +3,7 @@
 module Dynaland 
 
 using StatsBase
+using HDF5, JLD
 
 function getSampleFromArray(items)
   return sample(items)
@@ -183,6 +184,12 @@ function OutputPerComponent(outputfilepercomp,minDi,maxDi,rc,r0,A,f,k,R,S,g,comp
 	flush(outputfilepercomp);#To print in the output file each realization
 end
 
+function OutputDispersionMatrix(dispersionfile,DM)
+        save(dispersionfile, "DM", DM) 
+	return; 
+end
+
+
 function OutputPerGeneration(outputfilepergen,lastspecies,ri,S,Ji,G,maxDi,minDi,rc,r0,A,f,vr,mr,gamma,alpharich,gtrans,nedges,ncomp)
 	for i in 1:S
 	    writedlm(outputfilepergen, [ri maxDi minDi i Ji[i] vr mr rc r0 A f G gtrans nedges ncomp gamma alpharich[i] lastspecies], ' ');
@@ -361,7 +368,7 @@ end
 
 
 
-function createOutputFiles(landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen)
+function createOutputFiles(landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen,dispersionoutputs)
 	if(isfile(landscapeoutputs)==false)
 		outputfile = open(landscapeoutputs,"w");
 		writedlm(outputfile,["ri G maxDi minDi rc r0 A f cdynamics/G S Ji vr mr Mr_Gamma Vr_Gamma alpharich lastspecies Vr_r Mr_r Vr_t Mr_t Vr_e Mr_e Vr_c Mr_c"]);
@@ -386,17 +393,24 @@ function createOutputFiles(landscapeoutputs,sitesoutputs,phylogenyoutputs,landsc
 		writedlm(phylogenyfile,["ri mr vr Ancestral Derived Age"]); 
 		close(phylogenyfile);
 	end
+
+	if(isfile(dispersionoutputs)==false)
+		dispersionfile = open(dispersionoutputs,"w");
+		close(dispersionfile);
+        end
+
 end
 
 ###################### Dynamic of the model
 
 function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,sdev,mr,vr,landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen)
 
-	createOutputFiles(landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen);
+	createOutputFiles(landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen,dispersionoutputs);
 	outputfile = open(landscapeoutputs,"a");
 	outputfilepercomp = open(sitesoutputs,"a");
 	phylogenyfile = open(phylogenyoutputs,"a");
 	outputfilepergen = open(landscapeoutputpergen,"a");
+	dispersionfile = open(dispersionoutputs,"a");
 
 	for (ri in 1:nreal)#realizations
 		srand(seed+(7*ri));
@@ -502,6 +516,8 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,sdev,mr,vr,landscapeoutput
 					Vr_gamma =  var(partialgamma[middle_point:end]);
 					Mr_gamma =  mean(partialgamma[middle_point:end]);
 					Output(outputfile,lastspecies,ri,S,Ji,G,maxDi,minDi,r,r0,A,f,cdynamics,vr,mr,Mr_gamma,Vr_gamma,alpharich,Vr_r,Mr_r,Vr_t,Mr_t,Vr_e,Mr_e,Vr_c,Mr_c);
+                                        OutputDispersionMatrix(dispersionfile,DM);
+                                        flush(dispersionfile);
 					iF = iF+1;
 				end#while nf
 				iA = iA+1;

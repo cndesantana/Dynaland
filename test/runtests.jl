@@ -34,8 +34,9 @@ function main(mode_,nvals_,gmax_,mr_,jsdev_,jmean_)
         sitesoutputs = string("SitesOutputs_",sufix,"_nvals",nvals,"_mr",mr,"_G",Gmax,"_J",Jmean,"_sd",Jsdev,".txt");
         phylogenyoutputs = string("PhylogenyOutputs_",sufix,"_nvals",nvals,"_mr",mr,"_G",Gmax,"_J",Jmean,"_sd",Jsdev,".txt");
         landscapeoutputpergen = string("LandscapeOutputsPerGen_",sufix,"_nvals",nvals,"_mr",mr,"_G",Gmax,"_J",Jmean,"_sd",Jsdev,".txt");
+        dispersionoutputs = string("DispersionMatrix_",sufix,"_nvals",nvals,"_mr",mr,"_G",Gmax,"_J",Jmean,"_sd",Jsdev,".jld");
 
-        Dynaland.Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,Jmean,Jsdev,mr,vr,landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen);
+        Dynaland.Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,Jmean,Jsdev,mr,vr,landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen,dispersionoutputs);
 
 #        mydate = Libc.strftime("%Y_%m_%d_%H_%M_%S",time());
 #        command = `sh sendmail.sh Finished_at_$mydate charles.santana@gmail.com`
