@@ -211,17 +211,15 @@ function CladogenesisEvent(R,Sti,Individual,lastspecies,ts,phylogenyfile,ri,mr,v
 	return R,newspeciesClado; 
 end
 
-function MigrationEvent(R,KillHab,KillInd,Dc,Ji,S)
+function MigrationEvent(R,KillHab,KillInd,Dc,Ji,S,A)
 	MigrantHab = rand()*maximum(Dc[KillHab,:]);
 	target = KillHab;
 	allpos = find(Dc[target,:] .>= MigrantHab);#All the sites at a distance lower than the threshold 'MigrantHab'
 	source = minimum(allpos[find(allpos .!= KillHab)]);
-#	source = findfirst(Dc[target,:].>=MigrantHab);
 	MigrantInd = rand(1:Ji[source]);
-	#println("2.5.2.1-typeof(R) = ",typeof(R));
         R[target][KillInd] = R[source][MigrantInd];
-	#println("2.5.2.2-typeof(R) = ",typeof(R));
-	return R,MigrantHab;
+        DM[source][target] = A[source][target] + 1;#dispersions matrix, in order to calculate the asymetry in migration events
+	return R,MigrantHab,DM;
 end;
 
 function BirthEvent(R,KillInd,KillHab,BirthLocal,Ji)
@@ -304,7 +302,7 @@ function demography(S,Ji,D,Dc,mr,vr,R,lastspecies,ri,ts,phylogenyfile)
 		mvb = rand();
        		if (mvb <= realmr) && (mvb != 0)                  #;#Migration event
                         #println("Migration!");
-			R,MigrantHab = MigrationEvent(R,KillHab,KillInd,Dc,Ji,S);
+			R,MigrantHab,DM = MigrationEvent(R,KillHab,KillInd,Dc,Ji,S,DM);
 			#println("2.5.1-typeof(R) = ",typeof(R));
        		elseif (mvb > realmr) && (mvb <= realmr+vr)       #;#Cladogenesis Speciation event
                         #println("Clado!");
@@ -448,7 +446,8 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,sdev,mr,vr,landscapeoutput
 					r = r0;
 					#Metacommunity
                                         Ji = rand_normal(J,sdev,S);#S random numbers with mean J, standard deviation sdev
-					R = [];
+					R = [];#individuals matrix
+					DM = zeros(S,S);#dispersion matrix (how many individuals move from site i to site j)
 					#println("1-typeof(R) = ",typeof(R));
 					#println("R is empty");
                                         R,lastspecies = initialPopulation(R,Ji);#start the population of each of the Ji individuals of each of the S sites.
