@@ -1,14 +1,13 @@
 @everywhere function myparallelfunction1(mr)
-        command1 = `/home/cdesantana/Downloads/julia/julia /home/cdesantana/results_08Oct/runtests.jl 1 10 1000 $mr 0.5`;
-        command2 = `/home/cdesantana/Downloads/julia/julia /home/cdesantana/results_08Oct/runtests.jl 2 10 1000 $mr 0.5`;
-
+        command1 = `/home/cdesantana/Downloads/julia/julia /home/cdesantana/results_08Oct/runtests.jl 1 10 1000 $mr 0.5 10`;
+        command2 = `/home/cdesantana/Downloads/julia/julia /home/cdesantana/results_08Oct/runtests.jl 2 10 1000 $mr 0.5 10`;
 	run(command1);
 	run(command2);
 	return mr;
 end
 
 @everywhere function myparallelfunction2(mr)
-        command2 = `/home/cdesantana/Downloads/julia/julia /home/cdesantana/results_08Oct/runtests.jl 2 10 1000 $mr 0.5`;
+        command2 = `/home/cdesantana/Downloads/julia/julia /home/cdesantana/results_08Oct/runtests.jl 2 10 1000 $mr 0.5 10`;
 
 	run(command2);
 	return mr;
