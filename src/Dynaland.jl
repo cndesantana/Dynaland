@@ -495,6 +495,7 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,sdev,mr,vr,landscapeoutput
 						gamma,alpharich = GetRichness(R,S,alpharich);
 						push!(partialgamma,gamma);
 					end
+                                        OutputDispersionMatrix(dispersionfile,DM);
 #					OutputPerComponent(outputfilepercomp,minDi,maxDi,r,r0,A,f,G,R,S,g,comp,ncomp,gamma);
 #					OutputPerGeneration(outputfilepergen,lastspecies,ri,S,Ji,G,maxDi,minDi,r,r0,A,f,vr,mr,gamma,alpharich,gtrans,nedges,ncomp);
                                         flush(phylogenyfile); 
@@ -516,7 +517,6 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,sdev,mr,vr,landscapeoutput
 					Vr_gamma =  var(partialgamma[middle_point:end]);
 					Mr_gamma =  mean(partialgamma[middle_point:end]);
 					Output(outputfile,lastspecies,ri,S,Ji,G,maxDi,minDi,r,r0,A,f,cdynamics,vr,mr,Mr_gamma,Vr_gamma,alpharich,Vr_r,Mr_r,Vr_t,Mr_t,Vr_e,Mr_e,Vr_c,Mr_c);
-                                        OutputDispersionMatrix(dispersionfile,DM);
 					iF = iF+1;
 				end#while nf
 				iA = iA+1;
