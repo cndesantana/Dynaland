@@ -61,7 +61,7 @@ function transformMatrices(D,Di,S)
 	DI=Di+trDi;
 	DI=1./DI;
 	changediagonal!(DI,S,0);
-	Dc=cumsum(DI.*D,2);#to consider the existence of a path in the calculation of Dc
+	Dc=cumsum(DI,2);#to consider the existence of a path in the calculation of Dc
 	
 	return Dc,DI;
 end
@@ -184,12 +184,11 @@ function OutputPerComponent(outputfilepercomp,minDi,maxDi,rc,r0,A,f,k,R,S,g,comp
 	flush(outputfilepercomp);#To print in the output file each realization
 end
 
-function OutputDispersionMatrix(dispersionfile,DM)
+function OutputDispersionMatrix(dispersionfile,DM,Dc,D,Di)
         save(dispersionfile, "DM", DM);
-#After saving the matrix, we should load it by running the following command in Julia 
-#Pkg.add("HDF5")
-#using HDF5, JLD
-#dispersalmatrix = load("./DispersionMatrix_Static_nvals3_mr0.03_G30_J10_sd0.0.jld")["DM"] 
+        save(string(dispersionfile,".Dc.jld"), "Dc", Dc);
+        save(string(dispersionfile,".D.jld"), "D", D);
+        save(string(dispersionfile,".Di.jld"), "Di", Di);
 	return; 
 end
 
@@ -222,14 +221,20 @@ function CladogenesisEvent(R,Sti,Individual,lastspecies,ts,phylogenyfile,ri,mr,v
 	return R,newspeciesClado; 
 end
 
-function MigrationEvent(R,KillHab,KillInd,Dc,Ji,S,DM)
+function MigrationEvent(R,KillHab,KillInd,Dc,Ji,S,DM,D)
 	MigrantHab = rand()*maximum(Dc[KillHab,:]);
 	target = KillHab;
-	allpos = find(Dc[target,:] .>= MigrantHab);#All the sites at a distance lower than the threshold 'MigrantHab'
-	source = minimum(allpos[find(allpos .!= KillHab)]);
-	MigrantInd = rand(1:Ji[source]);
-        R[target][KillInd] = R[source][MigrantInd];
-        DM[source,target] = DM[source,target] + 1;#dispersions matrix, in order to calculate the asymetry in migration events
+        connectedsites = find(D[target,:] .>= 0)
+        if(length(connectedsites) > 0)
+       #       allpos = find(Dc[target,:] .>= MigrantHab);#All the sites at a distance lower than the threshold 'MigrantHab'
+               allpos = connectedsites[find(Dc[target,connectedsites] .>= MigrantHab)]
+               if(length(allpos) > 0)
+       	            source = minimum(allpos[find(allpos .!= KillHab)]);
+       	            MigrantInd = rand(1:Ji[source]);
+                    R[target][KillInd] = R[source][MigrantInd];
+                    DM[source,target] = DM[source,target] + 1;#dispersions matrix, in order to calculate the asymetry in migration events
+               end
+        end
 	return R,MigrantHab,DM;
 end;
 
@@ -313,7 +318,7 @@ function demography(S,Ji,D,Dc,DM,mr,vr,R,lastspecies,ri,ts,phylogenyfile)
 		mvb = rand();
        		if (mvb <= realmr) && (mvb != 0)                  #;#Migration event
                         #println("Migration!");
-			R,MigrantHab,DM = MigrationEvent(R,KillHab,KillInd,Dc,Ji,S,DM);
+			R,MigrantHab,DM = MigrationEvent(R,KillHab,KillInd,Dc,Ji,S,DM,D);
 			#println("2.5.1-typeof(R) = ",typeof(R));
        		elseif (mvb > realmr) && (mvb <= realmr+vr)       #;#Cladogenesis Speciation event
                         #println("Clado!");
@@ -495,7 +500,7 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,sdev,mr,vr,landscapeoutput
 						gamma,alpharich = GetRichness(R,S,alpharich);
 						push!(partialgamma,gamma);
 					end
-                                        OutputDispersionMatrix(dispersionfile,DM);
+                                        OutputDispersionMatrix(dispersionfile,DM,Dc,D,Di);
 #					OutputPerComponent(outputfilepercomp,minDi,maxDi,r,r0,A,f,G,R,S,g,comp,ncomp,gamma);
 #					OutputPerGeneration(outputfilepergen,lastspecies,ri,S,Ji,G,maxDi,minDi,r,r0,A,f,vr,mr,gamma,alpharich,gtrans,nedges,ncomp);
                                         flush(phylogenyfile); 
