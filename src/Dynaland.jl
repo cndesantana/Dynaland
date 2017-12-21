@@ -432,10 +432,16 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,sdev,mr,vr,landscapeoutput
 #                As,Fs,R0s = getLogSpaceParameterValues(mode,1,minimum(collect([minfreq,0.01])),percDi,minDi,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
                 As1,Fs1,R0s1 = getLogSpaceParameterValues(mode,1,minimum(collect([minfreq,0.01])),percDi,minDi/10,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
                 As2,Fs2,R0s2 = getLogSpaceParameterValues(mode,1,minimum(collect([minfreq,0.01])),maxDi,percDi,nvals);#the minimum value of frequency will be 0.01 in normal cases, and will be 1/G if the total number of generations is lower or equal to 100, to guarantee that we will have at least one entire cycle along the generations
-		As = [As1 As2];
 		Fs = [Fs1 Fs2];
 		R0s = [R0s1 R0s2];
-
+		As = [As1 As2];
+		Fs = 2./[1,5,10,50,100,500,1000,5000,10000,50000];
+                R0s = [0.025, 0.05, 0.075, 0.1, 1.12, 0.2, 0.4, 0.6, 0.8, 1]/2.;
+                if(mode == 1)
+                   As = 0./Fs 
+                elseif(mode == 2)
+                   As = Fs./Fs
+                end 
 ###### 	ISOLATED SITES AS INITIAL RGN	
 		r0 = R0s[1];
 		Di,D = InitialSeasonalRGN(S,w,r0);#To create the first RGN
@@ -483,7 +489,7 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,sdev,mr,vr,landscapeoutput
 						e_randomdynamics[k] = nedges;
 						c_randomdynamics[k] = ncomp;
 						partialgamma[k] = gamma;
-#					        OutputPerGeneration(outputfilepergen,lastspecies,ri,S,Ji,k-1,maxDi,minDi,r,r0,A,f,vr,mr,gamma,alpharich,gtrans,nedges,ncomp);
+					        OutputPerGeneration(outputfilepergen,lastspecies,ri,S,Ji,k-1,maxDi,minDi,r,r0,A,f,vr,mr,gamma,alpharich,gtrans,nedges,ncomp);
 						if((k % landG) == 0)#The parameter landG defines how often landscape is updated
 							cdynamics = cdynamics + 1;
 							r, D, Di = SeasonalRGN(r0,A,f,S,cdynamics,w);#Static landscape: A == 0
@@ -502,7 +508,7 @@ function Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,sdev,mr,vr,landscapeoutput
 					end
                                         OutputDispersionMatrix(dispersionfile,DM,Dc,D,Di);
 #					OutputPerComponent(outputfilepercomp,minDi,maxDi,r,r0,A,f,G,R,S,g,comp,ncomp,gamma);
-#					OutputPerGeneration(outputfilepergen,lastspecies,ri,S,Ji,G,maxDi,minDi,r,r0,A,f,vr,mr,gamma,alpharich,gtrans,nedges,ncomp);
+					OutputPerGeneration(outputfilepergen,lastspecies,ri,S,Ji,G,maxDi,minDi,r,r0,A,f,vr,mr,gamma,alpharich,gtrans,nedges,ncomp);
                                         flush(phylogenyfile); 
 					r_randomdynamics[Gmax+1] = r;
 					t_randomdynamics[Gmax+1] = gtrans;

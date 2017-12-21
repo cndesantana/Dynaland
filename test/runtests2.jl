@@ -19,7 +19,7 @@ function main(mode_,nvals_,Gmax_,mr_,sdev_)
 	Gmax = parse(Int,Gmax_);#Maximum number of Generations
 	sdev = parse(Float64,sdev_);#Standard deviation used to define the distribution of patch sizes (default = 0.5)
 	seed = 1;#seed for random numbers (to control the outputs)
-	nreal = 1;#Number of realizations
+	nreal = 100;#Number of realizations
 	landG = 1;#Number of generations before a landscape upgrade
 	S = 100;#Number of sites
 	J = 100;#Number of inds. per site
@@ -27,17 +27,18 @@ function main(mode_,nvals_,Gmax_,mr_,sdev_)
         println("Running Dynaland.jl:");
         println("mr = ",mr);
         println("model = ",mode_);
-	vr = 0.003;#migration from the regional pool (speciation)
+	vr = 0.001;#migration from the regional pool (speciation)
         sufix = "Static";
         if(mode == 2)
            sufix = "Dynamic";
         end
-        landscapeoutputs = string("LandscapeOutputs_",sufix,"_nvals",nvals,"_mr",mr,"_G",Gmax,".txt");
-        sitesoutputs = string("SitesOutputs_",sufix,"_nvals",nvals,"_mr",mr,"_G",Gmax,".txt");
-        phylogenyoutputs = string("PhylogenyOutputs_",sufix,"_nvals",nvals,"_mr",mr,"_G",Gmax,".txt");
-        landscapeoutputpergen = string("LandscapeOutputsPerGen_",sufix,"_nvals",nvals,"_mr",mr,"_G",Gmax,".txt");
+        landscapeoutputs = string("FSALandscapeOutputs_",sufix,"_nvals",nvals,"_mr",mr,"_G",Gmax,".txt");
+        sitesoutputs = string("FSASitesOutputs_",sufix,"_nvals",nvals,"_mr",mr,"_G",Gmax,".txt");
+        phylogenyoutputs = string("FSAPhylogenyOutputs_",sufix,"_nvals",nvals,"_mr",mr,"_G",Gmax,".txt");
+        landscapeoutputpergen = string("FSALandscapeOutputsPerGen_",sufix,"_nvals",nvals,"_mr",mr,"_G",Gmax,".txt");
+        dispersionoutputs = string("FSADispersionMatrix_",sufix,"_nvals",nvals,"_mr",mr,"_G",Gmax,"_J",J,"_sd",sdev,".jld");
 
-        Dynaland.Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,sdev,mr,vr,landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen);
+        Dynaland.Dynamic(mode,nvals,seed,nreal,Gmax,landG,S,J,sdev,mr,vr,landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen,dispersionoutputs);
 #        Dynaland.Dynamic(mode_,nvals_,seed,nreal,Gmax_,landG,S,J,sdev,mr_,vr,landscapeoutputs,sitesoutputs,phylogenyoutputs,landscapeoutputpergen);
 
 #        mydate = Libc.strftime("%Y_%m_%d_%H_%M_%S",time());
